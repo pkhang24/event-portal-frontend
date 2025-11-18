@@ -25,7 +25,7 @@ const AppContent = () => {
       navigate('/manage-events');
   };
 
-  const showFab = (user?.role === 'POSTER' || user?.role === 'ADMIN') 
+  const showFab = (user?.role === 'POSTER') 
                   && location.pathname !== '/manage-events';
 
   return (

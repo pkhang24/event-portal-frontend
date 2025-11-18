@@ -35,8 +35,9 @@ import MyNavbar from '../components/MyNavbar';
 import { 
     getDashboardStats, getAllUsers, updateUserRole, 
     getEventStats, getAllEventsForAdmin, approveEvent,
-    getDeletedUsers, getDeletedEvents, restoreUser,
-    permanentDeleteUser, restoreEvent, permanentDeleteEvent,
+    getDeletedUsers, getDeletedEvents, getDeletedCategories, getDeletedBanners,
+     restoreUser, permanentDeleteUser, restoreEvent, permanentDeleteEvent,
+    restoreCategory, hardDeleteCategory, restoreBanner, hardDeleteBanner,
     createUser, updateUser, getAllCategories, createCategory, 
     updateCategory, deleteCategory, getAllBanners, createBanner, 
     updateBanner, deleteBanner, softDeleteUser
@@ -49,6 +50,7 @@ import EventManagementTab from '../components/admin/EventManagementTab';
 import RecycleBinTab from '../components/admin/RecycleBinTab';
 import CategoryManagementTab from '../components/admin/CategoryManagementTab';
 import BannerManagementTab from '../components/admin/BannerManagementTab';
+import StatisticsTab from '../components/admin/StatisticsTab';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -62,6 +64,8 @@ const AdminDashboardPage = () => {
     const [events, setEvents] = useState([]);
     const [deletedUsers, setDeletedUsers] = useState([]);
     const [deletedEvents, setDeletedEvents] = useState([]);
+    const [deletedCategories, setDeletedCategories] = useState([]); // Mới
+    const [deletedBanners, setDeletedBanners] = useState([]);       // Mới
     
     // State loading riêng cho từng phần
     const [loadingStats, setLoadingStats] = useState(true);
@@ -156,12 +160,16 @@ const AdminDashboardPage = () => {
     const fetchTrash = async () => {
         setLoadingTrash(true);
         try {
-            const [usersRes, eventsRes] = await Promise.all([
+            const [usersRes, eventsRes, catsRes, bannersRes] = await Promise.all([
                 getDeletedUsers(),
-                getDeletedEvents()
+                getDeletedEvents(),
+                getDeletedCategories(), // Mới
+                getDeletedBanners()     // Mới
             ]);
             setDeletedUsers(usersRes.data);
             setDeletedEvents(eventsRes.data);
+            setDeletedCategories(catsRes.data); // Mới
+            setDeletedBanners(bannersRes.data); // Mới
         } catch (err) { message.error("Lỗi tải Thùng rác"); }
         finally { setLoadingTrash(false); }
     };
@@ -315,7 +323,26 @@ const AdminDashboardPage = () => {
             await deleteCategory(id);
             message.success("Xóa danh mục thành công!");
             fetchCategories(); // Tải lại
+            fetchTrash(); // Tải lại Thùng rác
         } catch (err) { message.error("Xóa thất bại. (Có thể danh mục đang được sử dụng?)"); }
+    };
+
+    // --- Trash Category ---
+    const handleRestoreCategory = async (id) => {
+        try {
+            await restoreCategory(id);
+            message.success("Khôi phục danh mục thành công!");
+            fetchCategories(); // Reload Tab Danh mục
+            fetchTrash();      // Reload Tab Thùng rác
+        } catch (err) { message.error("Khôi phục thất bại."); }
+    };
+
+    const handlePermanentDeleteCategory = async (id) => {
+        try {
+            await hardDeleteCategory(id);
+            message.success("Đã xóa vĩnh viễn!");
+            fetchTrash();
+        } catch (err) { message.error("Xóa thất bại."); }
     };
 
     // --- Tab 5: Banner Actions ---
@@ -337,25 +364,44 @@ const AdminDashboardPage = () => {
             await deleteBanner(id);
             message.success("Xóa banner thành công!");
             fetchBanners();
+            fetchTrash();
+        } catch (err) { message.error("Xóa thất bại."); }
+    };
+
+    // --- Trash Banner ---
+    const handleRestoreBanner = async (id) => {
+        try {
+            await restoreBanner(id);
+            message.success("Khôi phục banner thành công!");
+            fetchBanners(); // Reload Tab Banner
+            fetchTrash();   // Reload Tab Thùng rác
+        } catch (err) { message.error("Khôi phục thất bại."); }
+    };
+
+    const handlePermanentDeleteBanner = async (id) => {
+        try {
+            await hardDeleteBanner(id);
+            message.success("Đã xóa vĩnh viễn!");
+            fetchTrash();
         } catch (err) { message.error("Xóa thất bại."); }
     };
 
 
     // Cấu hình biểu đồ
-    const chartOptions = {
-        responsive: true,
-        plugins: {
-            legend: { position: 'top' },
-            title: {
-                display: true,
-                text: 'Top 5 Sự kiện được đăng ký nhiều nhất',
-                font: { size: 18 }
-            },
-        },
-        scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
-        }
-    };
+    // const chartOptions = {
+    //     responsive: true,
+    //     plugins: {
+    //         legend: { position: 'top' },
+    //         title: {
+    //             display: true,
+    //             text: 'Top 5 Sự kiện được đăng ký nhiều nhất',
+    //             font: { size: 18 }
+    //         },
+    //     },
+    //     scales: {
+    //         y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    //     }
+    // };
 
     // === 4. RENDER GIAO DIỆN ===
     return (
@@ -373,14 +419,14 @@ const AdminDashboardPage = () => {
                     </Row>
 
                     {/* Phần 2: Biểu đồ */}
-                    <Row gutter={16} style={{ marginBottom: 30 }}>
+                    {/* <Row gutter={16} style={{ marginBottom: 30 }}>
                         <Col span={24}>
                             <Card title="Thống kê Sự kiện">
                                 {loadingStats ? <div style={{textAlign: 'center', padding: 50}}><Spin /></div> :
                                  (chartData ? <Bar options={chartOptions} data={chartData} /> : <p>Chưa có dữ liệu để vẽ biểu đồ.</p>)}
                             </Card>
                         </Col>
-                    </Row>
+                    </Row> */}
 
                     {/* Phần 3: Tabs */}
                     <Tabs defaultActiveKey="1" 
@@ -439,15 +485,30 @@ const AdminDashboardPage = () => {
                         },
                         { 
                             key: '5',
+                            label: 'Báo cáo & Thống kê',
+                            children: <StatisticsTab />
+                        },
+                        { 
+                            key: '6',
                             label: 'Thùng rác',
                             children: <RecycleBinTab
-                                        deletedUsers={deletedUsers}
-                                        deletedEvents={deletedEvents}
                                         loading={loadingTrash}
+                                        // User
+                                        deletedUsers={deletedUsers}
                                         onRestoreUser={handleRestoreUser}
                                         onPermanentDeleteUser={handlePermanentDeleteUser}
+                                        // Event
+                                        deletedEvents={deletedEvents}
                                         onRestoreEvent={handleRestoreEvent}
                                         onPermanentDeleteEvent={handlePermanentDeleteEvent}
+                                        // Category (Mới)
+                                        deletedCategories={deletedCategories}
+                                        onRestoreCategory={handleRestoreCategory}
+                                        onPermanentDeleteCategory={handlePermanentDeleteCategory}
+                                        // Banner (Mới)
+                                        deletedBanners={deletedBanners}
+                                        onRestoreBanner={handleRestoreBanner}
+                                        onPermanentDeleteBanner={handlePermanentDeleteBanner}
                                       />
                         }
                     ]} />

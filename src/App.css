@@ -41,3 +41,31 @@
   color: #888;
 }
 
+/* Styles cho Carousel */
+.home-banner-carousel .slick-slide {
+  text-align: center;
+  height: 300px;
+  line-height: 300px;
+  background: #364d79;
+  overflow: hidden;
+}
+
+.home-banner-carousel .slick-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none; /* Quan trọng: Ngăn trình duyệt "kéo thả ảnh" mặc định để Carousel hoạt động */
+}
+
+/* Khi di chuột vào carousel, hiện con trỏ "nắm tay" */
+.home-banner-carousel {
+    cursor: grab; 
+}
+
+/* Khi đang nhấn giữ chuột để kéo, hiện con trỏ "nắm chặt" */
+.home-banner-carousel:active {
+    cursor: grabbing;
+}
+
+

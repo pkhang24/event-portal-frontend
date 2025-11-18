@@ -80,7 +80,7 @@ const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
                         <Input />
                     </Form.Item>
                     <Form.Item name="isActive" label="Trạng thái" valuePropName="checked">
-                        <Switch checkedChildren="Hoạt động" unCheckedChildren="Đã tắt" />
+                        <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
                     </Form.Item>
                 </Form>
             </Modal>

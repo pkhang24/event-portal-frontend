@@ -23,7 +23,14 @@ api.interceptors.request.use(
 
 // Thêm hàm này vào service của bạn
 export const getActiveBanners = async () => {
-    const response = await api.get('/banners/active');
+    const response = await api.get('/banners/active', {
+        // Thêm các header này để yêu cầu KHÔNG CACHE
+        headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+        }
+    });
     return response.data;
 };
 

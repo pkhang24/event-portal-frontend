@@ -15,6 +15,7 @@ import {
     AppstoreAddOutlined
 } from '@ant-design/icons';
 import { getCurrentUser, logout } from '../services/authService';
+import logoImage from '../assets/logo-cnkt_white.png';
 
 const { Header } = Layout;
 
@@ -51,12 +52,12 @@ const MyNavbar = () => {
             icon: <HistoryOutlined />,
             label: <Link to="/history">Lịch sử tham gia</Link>,
         },
-        (user?.role === 'POSTER' || user?.role === 'ADMIN') && {
+        (user?.role === 'POSTER') && {
             key: 'manage-events',
             icon: <AppstoreAddOutlined />,
             label: <Link to="/manage-events">Sự kiện của tôi</Link>,
         },
-        (user?.role === 'POSTER' || user?.role === 'ADMIN') && {
+        (user?.role === 'POSTER') && {
             key: 'check-in',
             icon: <QrcodeOutlined />,
             label: <Link to="/check-in">Điểm danh (QR)</Link>,
@@ -80,42 +81,51 @@ const MyNavbar = () => {
     // ---------------- HẾT SỬA 1 -------------------
 
     // --- 2. TẠO MENU CHÍNH (Bên cạnh Logo) ---
-    const mainNavItems = [
-        {
-            key: '/',
-            icon: <HomeOutlined />,
-            label: <Link to="/">Trang chủ</Link>,
-        },
-    ];
+    // const mainNavItems = [
+    //     {
+    //         key: '/',
+    //         icon: <HomeOutlined />,
+    //         label: <Link to="/">Trang chủ</Link>,
+    //     },
+    // ];
 
     // --- 3. RENDER RA HEADER VỚI FLEXBOX ---
     return (
         <Header style={{ 
-            position: 'sticky', 
-            top: 0, 
-            zIndex: 1, 
-            width: '100%', 
-            background: '#fff',
-            borderBottom: '1px solid #f0f0f0',
-            padding: '0 24px',
-            display: 'flex',
-            alignItems: 'center'
+            display: 'flex', 
+                    alignItems: 'center', 
+                    padding: '0 40px', // Tăng padding ngang cho Navbar
+                    backgroundColor: '#fff', 
+                    borderBottom: '1px solid #f0f0f0',
+                    height: '65px'
         }}>
             
             {/* --- PHẦN BÊN TRÁI: Logo & Nav Chính --- */}
             <Space size="large">
                 <div 
                     className="logo" 
-                    style={{ color: '#000', fontWeight: 'bold', fontSize: '1.2rem', cursor: 'pointer' }}
+                    style={{ 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        marginRight: '24px'
+                    }}
                     onClick={() => navigate('/')}
                 >
-                    EVENT PORTAL
+                    <img 
+                        src={logoImage} 
+                        alt="Logo Khoa Công nghệ & Kỹ thuật" 
+                        style={{ 
+                            height: '50px', 
+                            verticalAlign: 'middle' 
+                        }} 
+                    />
                 </div>
                 <Menu
                     theme="light"
                     mode="horizontal"
                     selectedKeys={[location.pathname]}
-                    items={mainNavItems}
+                    // items={mainNavItems}
                     style={{ borderBottom: 'none', background: 'none' }}
                 />
             </Space>

@@ -48,6 +48,29 @@ export const getEventStats = async () => {
     return response.data;
 };
 
+export const getTopEventStats = async (year, month) => {
+    // Tạo query params
+    const params = new URLSearchParams();
+    params.append('year', year);
+    if (month > 0) { // Chỉ thêm 'month' nếu nó khác 0 (Cả năm)
+        params.append('month', month);
+    }
+
+    // Gọi API
+    const response = await api.get(`/admin/stats/top-events?${params.toString()}`);
+    return response.data;
+};
+
+export const getMonthlyEventStats = async (year) => {
+    const response = await api.get(`/admin/stats/monthly-events?year=${year}`);
+    return response.data;
+};
+
+export const getTopCategoryStats = async () => {
+    const response = await api.get('/admin/stats/top-categories');
+    return response.data;
+};
+
 // Lấy tất cả sự kiện (cả draft/published) cho Admin
 export const getAllEventsForAdmin = async () => {
     const response = await api.get('/admin/events');
@@ -91,3 +114,33 @@ export const permanentDeleteUser = (id) => api.delete(`/admin/users/trash/${id}/
 export const getDeletedEvents = () => api.get('/admin/events/trash');
 export const restoreEvent = (id) => api.post(`/admin/events/trash/${id}/restore`);
 export const permanentDeleteEvent = (id) => api.delete(`/admin/events/trash/${id}/permanent`);
+
+// --- Category Trash ---
+export const getDeletedCategories = async () => {
+    const response = await api.get('/admin/categories/trash');
+    return response.data;
+};
+
+export const restoreCategory = async (id) => {
+    const response = await api.put(`/admin/categories/trash/restore/${id}`);
+    return response.data;
+};
+
+export const hardDeleteCategory = async (id) => {
+    await api.delete(`/admin/categories/trash/hard-delete/${id}`);
+};
+
+// --- Banner Trash ---
+export const getDeletedBanners = async () => {
+    const response = await api.get('/admin/banners/trash');
+    return response.data;
+};
+
+export const restoreBanner = async (id) => {
+    const response = await api.put(`/admin/banners/trash/restore/${id}`);
+    return response.data;
+};
+
+export const hardDeleteBanner = async (id) => {
+    await api.delete(`/admin/banners/trash/hard-delete/${id}`);
+};
