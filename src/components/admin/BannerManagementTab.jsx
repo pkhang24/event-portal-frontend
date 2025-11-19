@@ -9,7 +9,7 @@ const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
 
     const showModal = (banner = null) => {
         setEditingBanner(banner);
-        form.setFieldsValue(banner ? banner : { imageUrl: '', linkUrl: '', isActive: true });
+        form.setFieldsValue(banner ? banner : { imageUrl: '', isActive: true });
         setIsModalVisible(true);
     };
 
@@ -30,7 +30,6 @@ const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
             key: 'imageUrl',
             render: (url) => <Image src={url} width={150} />
         },
-        { title: 'Đường dẫn (Link)', dataIndex: 'linkUrl', key: 'linkUrl' },
         { 
             title: 'Trạng thái', 
             dataIndex: 'isActive', 
@@ -41,7 +40,7 @@ const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
             title: 'Hành động', key: 'action', render: (_, record) => (
                 <Space>
                     <Button icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
-                    <Popconfirm title="Xóa banner?" onConfirm={() => onDelete(record.id)}>
+                    <Popconfirm title="Chuyển banner này vào thùng rác?" onConfirm={() => onDelete(record.id)}>
                         <Button danger icon={<DeleteOutlined />}>Xóa</Button>
                     </Popconfirm>
                 </Space>
@@ -74,9 +73,6 @@ const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
             >
                 <Form form={form} layout="vertical" onFinish={handleFinish}>
                     <Form.Item name="imageUrl" label="Link Ảnh (URL)" rules={[{ required: true, type: 'url' }]}>
-                        <Input />
-                    </Form.Item>
-                    <Form.Item name="linkUrl" label="Đường dẫn khi click (VD: /events/1)">
                         <Input />
                     </Form.Item>
                     <Form.Item name="isActive" label="Trạng thái" valuePropName="checked">

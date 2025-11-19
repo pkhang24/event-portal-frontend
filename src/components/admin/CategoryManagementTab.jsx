@@ -33,7 +33,7 @@ const CategoryManagementTab = ({ categories, loading, onSave, onDelete }) => {
                     <Button icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
                     <Popconfirm
                         title="Xóa danh mục?"
-                        description="Bạn có chắc muốn xóa? (Cần đảm bảo không có sự kiện nào dùng)"
+                        description="Chuyển danh mục này vào thùng rác?"
                         onConfirm={() => onDelete(record.id)}
                     >
                         <Button danger icon={<DeleteOutlined />}>Xóa</Button>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Layout, Typography, Button, Descriptions, Spin, Alert, message, Tag, Card } from 'antd';
+import { Layout, Typography, Button, Descriptions, Spin, Alert, message, Tag, Card, Row, Col } from 'antd';
 import { CalendarOutlined, EnvironmentOutlined, TeamOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
 import { getEventDetail } from '../services/eventService';
@@ -132,8 +132,5 @@ const EventDetailPage = () => {
         </Layout>
     );
 };
-
-// Cần import thêm Row, Col từ antd ở đầu file
-import { Row, Col } from 'antd';
 
 export default EventDetailPage;

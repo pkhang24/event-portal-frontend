@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout, Typography, List, Card, Tag, Modal, Button, Empty, Spin, Alert, Popconfirm, message } from 'antd'; // <<< 1. Thêm 'message'
-import { CalendarOutlined, EnvironmentOutlined, QrcodeOutlined, DeleteOutlined } from '@ant-design/icons';
+import { CalendarOutlined, EnvironmentOutlined, QrcodeOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { QRCodeSVG } from 'qrcode.react';
 import MyNavbar from '../components/MyNavbar';
 import api from '../services/api';
@@ -14,6 +15,8 @@ const MyTicketsPage = () => {
     const [error, setError] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
+
+    const navigate = useNavigate();
 
     // --- 3. Tách hàm fetchTickets ra ngoài để tái sử dụng ---
     const fetchTickets = async () => {
@@ -64,6 +67,9 @@ const MyTicketsPage = () => {
         <Layout className="layout" style={{ minHeight: '100vh' }}>
             <MyNavbar />
             <Content style={{ padding: '0 50px', marginTop: 30 }}>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
+                    Quay lại
+                </Button>
                 <div style={{ background: '#fff', padding: 24, minHeight: 380, borderRadius: 8 }}>
                     <Title level={2} style={{ marginBottom: 30 }}>Vé tham gia sự kiện của tôi</Title>
 

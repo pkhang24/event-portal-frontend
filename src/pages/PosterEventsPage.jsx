@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout, Typography, Table, Button, Modal, Form, Input, DatePicker, InputNumber, message, Tag, Space ,Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, DownloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, DownloadOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
 import { getMyEvents, createEvent, updateEvent, getParticipants } from '../services/eventService';
 import { softDeleteEvent } from '../services/eventService';
@@ -24,6 +25,7 @@ const PosterEventsPage = () => {
     const [selectedEventId, setSelectedEventId] = useState(null);
 
     const [messageApi, contextHolder] = message.useMessage();
+    const navigate = useNavigate();
 
     const fetchEvents = async () => {
         setLoading(true);
@@ -188,6 +190,9 @@ const PosterEventsPage = () => {
             {contextHolder}
             <MyNavbar />
             <Content style={{ padding: '0 50px', marginTop: 30 }}>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
+                     Quay lại
+                </Button>
                 <div style={{ background: '#fff', padding: 24, minHeight: 380 }}>
                     <Title level={2} style={{ float: 'left' }}>Quản lý Sự kiện</Title>
                     <Button 

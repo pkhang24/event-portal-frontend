@@ -69,18 +69,15 @@ const AppContent = () => {
                 } 
             }} // Style cho tooltip
           >
-            <FloatButton 
-                icon={<PlusOutlined style={{ fontSize: '20px' }} />} 
+            <FloatButton
+                icon={<PlusOutlined />} 
                 type="primary" 
                 
                 style={{ 
-                    right: 30, 
-                    bottom: 50,
-                    width: 60,   
-                    height: 60,  
-                    display: 'flex', 
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    right: 24, 
+                    bottom: 85,
+                    width: 50,   
+                    height: 50,  
                     // Thêm box-shadow mặc định để nó trông nổi bật ngay cả khi không hover
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)', 
                     transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)' // Đảm bảo transition mượt mà

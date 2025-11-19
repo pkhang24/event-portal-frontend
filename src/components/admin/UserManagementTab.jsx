@@ -52,7 +52,7 @@ const UserManagementTab = ({ users, loading, onRoleChange, onEdit, onDelete, onV
                         Sửa
                     </Button>
                     <Popconfirm
-                        title="Chuyển vào thùng rác?"
+                        title="Chuyển tài khoản này vào thùng rác?"
                         onConfirm={() => onDelete(record.id)}
                         okText="Xóa"
                         cancelText="Hủy"

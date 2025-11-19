@@ -114,7 +114,7 @@ const MyFooter = () => {
             </Row>
 
             {/* Nút Back to Top */}
-            <FloatButton.BackTop type="primary" icon={<ArrowUpOutlined />} style={{ right: 24, bottom: 24 }} />
+            <FloatButton.BackTop type="primary" icon={<ArrowUpOutlined />} style={{ right: 24, bottom: 24, width: 50, height: 50 }} />
         </Footer>
     );
 };

@@ -52,7 +52,7 @@ const EventManagementTab = ({ events, loading, onApprove, onDelete }) => {
                     )}
                     <Popconfirm
                         title="Chuyển vào thùng rác?"
-                        description="Bạn có chắc muốn xóa (mềm) sự kiện này?"
+                        description="Chuyển sự kiện này vào thùng rác?"
                         // Sửa lại: Gọi hàm onDelete từ props (do cha truyền xuống)
                         onConfirm={() => onDelete(record.id)}
                         okText="Xóa"

@@ -36,11 +36,11 @@ import {
     getDashboardStats, getAllUsers, updateUserRole, 
     getEventStats, getAllEventsForAdmin, approveEvent,
     getDeletedUsers, getDeletedEvents, getDeletedCategories, getDeletedBanners,
-     restoreUser, permanentDeleteUser, restoreEvent, permanentDeleteEvent,
-    restoreCategory, hardDeleteCategory, restoreBanner, hardDeleteBanner,
+    restoreUser, permanentDeleteUser, restoreEvent, permanentDeleteEvent,
+    restoreCategory, permanentDeleteCategory, restoreBanner, permanentDeleteBanner,
     createUser, updateUser, getAllCategories, createCategory, 
-    updateCategory, deleteCategory, getAllBanners, createBanner, 
-    updateBanner, deleteBanner, softDeleteUser
+    updateCategory, getAllBanners, createBanner, 
+    updateBanner, softDeleteUser, softDeleteCategory, softDeleteBanner
 } from '../services/adminService';
 import { softDeleteEvent } from '../services/eventService';
 
@@ -62,6 +62,8 @@ const AdminDashboardPage = () => {
     const [chartData, setChartData] = useState(null);
     const [users, setUsers] = useState([]);
     const [events, setEvents] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [banners, setBanners] = useState([]);
     const [deletedUsers, setDeletedUsers] = useState([]);
     const [deletedEvents, setDeletedEvents] = useState([]);
     const [deletedCategories, setDeletedCategories] = useState([]); // Mới
@@ -71,6 +73,8 @@ const AdminDashboardPage = () => {
     const [loadingStats, setLoadingStats] = useState(true);
     const [loadingUsers, setLoadingUsers] = useState(true);
     const [loadingEvents, setLoadingEvents] = useState(true);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [loadingBanners, setLoadingBanners] = useState(true);
     const [loadingTrash, setLoadingTrash] = useState(true);
 
     // --- State mới cho Modal User ---
@@ -79,10 +83,10 @@ const AdminDashboardPage = () => {
     const [form] = Form.useForm(); // Hook để điều khiển Form
 
     // --- State mới ---
-    const [categories, setCategories] = useState([]);
-    const [banners, setBanners] = useState([]);
-    const [loadingCategories, setLoadingCategories] = useState(true);
-    const [loadingBanners, setLoadingBanners] = useState(true);
+    // const [categories, setCategories] = useState([]);
+    // const [banners, setBanners] = useState([]);
+    // const [loadingCategories, setLoadingCategories] = useState(true);
+    // const [loadingBanners, setLoadingBanners] = useState(true);
 
     // --- THÊM STATE CHO MODAL "XEM" ---
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
@@ -320,8 +324,8 @@ const AdminDashboardPage = () => {
 
     const handleDeleteCategory = async (id) => {
         try {
-            await deleteCategory(id);
-            message.success("Xóa danh mục thành công!");
+            await softDeleteCategory(id);
+            message.success("Đã chuyển danh mục vào thùng rác!");
             fetchCategories(); // Tải lại
             fetchTrash(); // Tải lại Thùng rác
         } catch (err) { message.error("Xóa thất bại. (Có thể danh mục đang được sử dụng?)"); }
@@ -339,7 +343,7 @@ const AdminDashboardPage = () => {
 
     const handlePermanentDeleteCategory = async (id) => {
         try {
-            await hardDeleteCategory(id);
+            await permanentDeleteCategory(id);
             message.success("Đã xóa vĩnh viễn!");
             fetchTrash();
         } catch (err) { message.error("Xóa thất bại."); }
@@ -361,8 +365,8 @@ const AdminDashboardPage = () => {
 
     const handleDeleteBanner = async (id) => {
         try {
-            await deleteBanner(id);
-            message.success("Xóa banner thành công!");
+            await softDeleteBanner(id);
+            message.success("Đã chuyển banner vào thùng rác!");
             fetchBanners();
             fetchTrash();
         } catch (err) { message.error("Xóa thất bại."); }
@@ -380,7 +384,7 @@ const AdminDashboardPage = () => {
 
     const handlePermanentDeleteBanner = async (id) => {
         try {
-            await hardDeleteBanner(id);
+            await permanentDeleteBanner(id);
             message.success("Đã xóa vĩnh viễn!");
             fetchTrash();
         } catch (err) { message.error("Xóa thất bại."); }

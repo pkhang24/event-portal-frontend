@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout, Typography, Spin, Alert, message, Result, Button } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Html5QrcodeScanner } from 'html5-qrcode'; // Import thư viện quét
 import MyNavbar from '../components/MyNavbar';
 import { checkInTicket } from '../services/registrationService'; // (hoặc ../services/registrationService)
@@ -16,6 +18,8 @@ const CheckInPage = () => {
     const [loading, setLoading] = useState(false); // Trạng thái đang gọi API
     const [apiError, setApiError] = useState(null); // Lỗi từ API
     const [apiSuccess, setApiSuccess] = useState(null); // Thông báo thành công từ API
+
+    const navigate = useNavigate();
 
     // Hàm callback khi quét thành công
     const onScanSuccess = async (decodedText, decodedResult) => {
@@ -99,6 +103,9 @@ const CheckInPage = () => {
         <Layout className="layout" style={{ minHeight: '100vh' }}>
             <MyNavbar />
             <Content style={{ padding: '0 50px', marginTop: 30 }}>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
+                    Quay lại
+                </Button>
                 <div style={{ background: '#fff', padding: 24, minHeight: 380, maxWidth: 600, margin: 'auto' }}>
                     <Title level={2} style={{ textAlign: 'center', marginBottom: 30 }}>Quét mã QR Điểm danh</Title>
 

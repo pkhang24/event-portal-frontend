@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Layout, Typography, Card, Descriptions, Form, Input, Button, message, Spin, Row, Col } from 'antd';
-import { UserOutlined, MailOutlined, PhoneOutlined, IdcardOutlined, BookOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, PhoneOutlined, IdcardOutlined, BookOutlined, LockOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import MyNavbar from '../components/MyNavbar';
 import { getMyProfile, updateMyProfile, changePassword } from '../services/api'; // (hoặc profileService)
@@ -104,6 +104,9 @@ const ProfilePage = () => {
             {contextHolder}
             <MyNavbar />
             <Content style={{ padding: '0 50px', marginTop: 30 }}>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
+                    Quay lại
+                </Button>
                 <div style={{ background: '#fff', padding: 24, minHeight: 380, maxWidth: 1200, margin: 'auto' }}>
                     <Title level={2}>Thông tin tài khoản</Title>
                     

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Layout, Typography, List, Card, Tag, Empty, Spin, Alert } from 'antd';
-import { CalendarOutlined, EnvironmentOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { Layout, Typography, List, Card, Tag, Empty, Spin, Alert, Button } from 'antd';
+import { CalendarOutlined, EnvironmentOutlined, CheckCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
 import { getMyHistory } from '../services/registrationService'; // (hoặc service của bạn)
 
@@ -11,6 +12,8 @@ const HistoryPage = () => {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -30,6 +33,9 @@ const HistoryPage = () => {
         <Layout className="layout" style={{ minHeight: '100vh' }}>
             <MyNavbar />
             <Content style={{ padding: '0 50px', marginTop: 30 }}>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
+                    Quay lại
+                </Button>
                 <div style={{ background: '#fff', padding: 24, minHeight: 380, borderRadius: 8 }}>
                     <Title level={2} style={{ marginBottom: 30 }}>Lịch sử Sự kiện đã tham gia</Title>
 
