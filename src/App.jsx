@@ -15,6 +15,7 @@ import PosterEventsPage from './pages/PosterEventsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import CheckInPage from './pages/CheckInPage';
 import HistoryPage from './pages/HistoryPage';
+import { BannerProvider } from './context/BannerContext';
 
 const AppContent = () => {
   const navigate = useNavigate();
@@ -93,9 +94,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <BannerProvider> 
+      <Router>
+        <AppContent />
+      </Router>
+    </BannerProvider>
   );
 }
 

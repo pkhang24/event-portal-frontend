@@ -9,6 +9,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import axios from 'axios';
 
 // Đăng ký các thành phần của Chart.js
 ChartJS.register(
@@ -51,6 +52,7 @@ import RecycleBinTab from '../components/admin/RecycleBinTab';
 import CategoryManagementTab from '../components/admin/CategoryManagementTab';
 import BannerManagementTab from '../components/admin/BannerManagementTab';
 import StatisticsTab from '../components/admin/StatisticsTab';
+import { useBanner } from '../context/BannerContext';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -68,6 +70,7 @@ const AdminDashboardPage = () => {
     const [deletedEvents, setDeletedEvents] = useState([]);
     const [deletedCategories, setDeletedCategories] = useState([]); // Mới
     const [deletedBanners, setDeletedBanners] = useState([]);       // Mới
+    const { refreshBanners } = useBanner();
     
     // State loading riêng cho từng phần
     const [loadingStats, setLoadingStats] = useState(true);
@@ -82,11 +85,7 @@ const AdminDashboardPage = () => {
     const [editingUser, setEditingUser] = useState(null); // null = tạo mới, object = sửa
     const [form] = Form.useForm(); // Hook để điều khiển Form
 
-    // --- State mới ---
-    // const [categories, setCategories] = useState([]);
-    // const [banners, setBanners] = useState([]);
-    // const [loadingCategories, setLoadingCategories] = useState(true);
-    // const [loadingBanners, setLoadingBanners] = useState(true);
+    const [messageApi, contextHolder] = message.useMessage();
 
     // --- THÊM STATE CHO MODAL "XEM" ---
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
@@ -231,16 +230,18 @@ const AdminDashboardPage = () => {
             if (editingUser) {
                 // Sửa
                 await updateUser(editingUser.id, values);
-                message.success("Cập nhật user thành công!");
+                messageApi.success("Cập nhật user thành công!");
             } else {
                 // Thêm
                 await createUser(values);
-                message.success("Tạo user mới thành công!");
+                messageApi.success("Tạo user mới thành công!");
             }
             fetchUsers(); // Tải lại danh sách user
             setIsUserModalVisible(false);
         } catch (err) {
-            message.error(err.response?.data?.message || "Thao tác thất bại.");
+            console.error("Lỗi chi tiết từ Backend:", err.response); 
+            const errorMsg = err.response?.data?.message || "Thao tác thất bại.";
+            messageApi.error(errorMsg); 
         }
     };
 
@@ -313,13 +314,17 @@ const AdminDashboardPage = () => {
         try {
             if (id) { // Sửa
                 await updateCategory(id, values);
-                message.success("Cập nhật danh mục thành công!");
+                messageApi.success("Cập nhật danh mục thành công!");
             } else { // Thêm
                 await createCategory(values);
-                message.success("Tạo danh mục thành công!");
+                messageApi.success("Tạo danh mục thành công!");
             }
             fetchCategories(); // Tải lại
-        } catch (err) { message.error("Thao tác thất bại."); }
+        } catch (err) {
+            console.error("Lỗi chi tiết từ Backend:", err.response);
+            const errorMsg = err.response?.data?.message || "Thao tác thất bại.";
+            messageApi.error(errorMsg);
+        }
     };
 
     const handleDeleteCategory = async (id) => {
@@ -354,13 +359,18 @@ const AdminDashboardPage = () => {
         try {
             if (id) {
                 await updateBanner(id, values);
-                message.success("Cập nhật banner thành công!");
+                messageApi.success("Cập nhật banner thành công!");
             } else {
                 await createBanner(values);
-                message.success("Tạo banner thành công!");
+                messageApi.success("Tạo banner thành công!");
             }
             fetchBanners();
-        } catch (err) { message.error("Thao tác thất bại."); }
+            refreshBanners();
+        } catch (err) {
+            console.error("Lỗi chi tiết từ Backend:", err.response);
+            const errorMsg = err.response?.data?.message || "Thao tác thất bại.";
+            messageApi.error(errorMsg);
+        }
     };
 
     const handleDeleteBanner = async (id) => {
@@ -368,6 +378,7 @@ const AdminDashboardPage = () => {
             await softDeleteBanner(id);
             message.success("Đã chuyển banner vào thùng rác!");
             fetchBanners();
+            refreshBanners();
             fetchTrash();
         } catch (err) { message.error("Xóa thất bại."); }
     };
@@ -410,6 +421,7 @@ const AdminDashboardPage = () => {
     // === 4. RENDER GIAO DIỆN ===
     return (
         <Layout className="layout" style={{ minHeight: '100vh' }}>
+            {contextHolder}
             <MyNavbar />
             <Content style={{ padding: '0 50px', marginTop: 30 }}>
                 <div style={{ background: '#fff', padding: 24, minHeight: 380 }}>

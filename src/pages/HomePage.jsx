@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getPublicEvents, getCategories, } from '../services/eventService';
 import { getActiveBanners } from '../services/api';
+import { useBanner } from '../context/BannerContext';
 import MyNavbar from '../components/MyNavbar';
 import MyFooter from '../components/MyFooter';
 import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Tabs, Segmented } from 'antd';
@@ -102,12 +103,17 @@ const EventCalendarView = ({ events }) => {
 export const CardComponent = ({ event }) => {
     const navigate = useNavigate();
     const now = new Date();
-    // Logic xác định 'Đang diễn ra': Bắt đầu <= Hiện tại <= Kết thúc
-    const isOngoing = new Date(event.thoiGianBatDau) <= now && new Date(event.thoiGianKetThuc) >= now;
+    const startTime = new Date(event.thoiGianBatDau);
+    const endTime = new Date(event.thoiGianKetThuc);
+
+    // 1. Logic xác định trạng thái
+    const isEnded = endTime < now; // Đã kết thúc
+    const isOngoing = startTime <= now && endTime >= now; // Đang diễn ra
+
     const handleCardClick = () => {
         navigate(`/events/${event.id}`);
     };
-    
+
     return (
         <Card
             hoverable
@@ -116,15 +122,37 @@ export const CardComponent = ({ event }) => {
                 height: '100%', 
                 display: 'flex', 
                 flexDirection: 'column', 
-                cursor: 'pointer' // Biến con trỏ chuột thành hình bàn tay
+                cursor: 'pointer',
+                // 2. Style cho sự kiện đã kết thúc (Làm mờ và nền xám)
+                opacity: isEnded ? 0.7 : 1,
+                backgroundColor: isEnded ? '#f5f5f5' : '#fff',
             }}
             cover={
-                <img alt={event.tieuDe} src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
-                     style={{ height: 200, objectFit: 'cover' }} />
+                <div style={{ position: 'relative' }}>
+                    <img 
+                        alt={event.tieuDe} 
+                        src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
+                        style={{ height: 200, width: '100%', objectFit: 'cover', display: 'block' }} 
+                    />
+                    {/* 3. Nhãn dán đè lên ảnh nếu đã kết thúc */}
+                    {isEnded && (
+                        <div style={{
+                            position: 'absolute', top: 10, right: 10, 
+                            background: 'rgba(0,0,0,0.6)', color: 'white', 
+                            padding: '4px 8px', borderRadius: 4, fontWeight: 'bold', fontSize: '12px'
+                        }}>
+                            ĐÃ KẾT THÚC
+                        </div>
+                    )}
+                </div>
             }
         >
             <Meta
-                title={<Text strong style={{ fontSize: 16 }} ellipsis={{ tooltip: event.tieuDe }}>{event.tieuDe}</Text>}
+                title={
+                    <Text strong style={{ fontSize: 16, color: isEnded ? '#888' : 'inherit' }} ellipsis={{ tooltip: event.tieuDe }}>
+                        {event.tieuDe}
+                    </Text>
+                }
                 description={
                     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                         <Text type="secondary"><CalendarOutlined /> {new Date(event.thoiGianBatDau).toLocaleString('vi-VN')}</Text>
@@ -132,11 +160,23 @@ export const CardComponent = ({ event }) => {
                         <Paragraph ellipsis={{ rows: 2 }} style={{ marginTop: 10, flex: 1 }}>
                             {event.moTaNgan}
                         </Paragraph>
-                        <Link to={`/events/${event.id}`} style={{ marginTop: 'auto' }}>
-                            <Button type="primary" block disabled={isOngoing}>
-                                {isOngoing ? "Đang diễn ra" : "Xem chi tiết"}
-                            </Button>
-                        </Link>
+                        
+                        <div style={{ marginTop: 'auto' }}>
+                            {/* 4. Logic hiển thị nút bấm (Đã bỏ thẻ Link thừa) */}
+                            {isEnded ? (
+                                <Button disabled style={{ background: '#d9d9d9', color: '#888', borderColor: '#d9d9d9' }} block>
+                                    Đã kết thúc
+                                </Button>
+                            ) : isOngoing ? (
+                                <Button type="primary" ghost block>
+                                    Đang diễn ra
+                                </Button>
+                            ) : (
+                                <Button type="primary" block>
+                                    Xem chi tiết
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 }
             />
@@ -148,21 +188,22 @@ export const CardComponent = ({ event }) => {
 const EventListView = ({ events }) => {
     const now = new Date();
     
-    // Chia làm 2 nhóm từ danh sách đã lọc
+    // 1. Chia làm 3 nhóm (Thêm nhóm endedEvents)
     const ongoingEvents = events.filter(e => new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now);
     const upcomingEvents = events.filter(e => new Date(e.thoiGianBatDau) > now);
+    const endedEvents = events.filter(e => new Date(e.thoiGianKetThuc) < now); // <--- THÊM DÒNG NÀY
 
-    // Nếu danh sách rỗng hoàn toàn
+    // Nếu không có sự kiện nào
     if (events.length === 0) {
         return <Alert message="Không tìm thấy sự kiện nào phù hợp." type="info" showIcon />;
     }
 
     return (
         <>
-            {/* Phần Đang diễn ra */}
+            {/* 2. Phần Đang diễn ra */}
             {ongoingEvents.length > 0 && (
                 <>
-                    <Title level={3} style={{ marginTop: 30 }}>Đang diễn ra</Title>
+                    <Title level={3} style={{ marginTop: 30 }}>Sự kiện đang diễn ra</Title>
                     <Row gutter={[24, 24]}>
                         {ongoingEvents.map(event => (
                             <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
@@ -173,10 +214,10 @@ const EventListView = ({ events }) => {
                 </>
             )}
 
-            {/* Phần Sắp diễn ra */}
+            {/* 3. Phần Sắp diễn ra */}
             {upcomingEvents.length > 0 && (
                 <>
-                    <Title level={3} style={{ marginTop: 30 }}>Sắp diễn ra</Title>
+                    <Title level={3} style={{ marginTop: 30 }}>Sự kiện sắp diễn ra </Title>
                     <Row gutter={[24, 24]}>
                         {upcomingEvents.map(event => (
                             <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
@@ -187,9 +228,18 @@ const EventListView = ({ events }) => {
                 </>
             )}
             
-            {/* Trường hợp có event nhưng không thuộc 2 nhóm trên (đã kết thúc) */}
-            {ongoingEvents.length === 0 && upcomingEvents.length === 0 && events.length > 0 && (
-                 <Alert message="Chỉ có các sự kiện đã kết thúc." type="info" showIcon style={{marginTop: 20}}/>
+            {/* 4. Phần Đã kết thúc (MỚI) */}
+            {endedEvents.length > 0 && (
+                <>
+                    <Title level={3} style={{ marginTop: 30 }}>Sự kiện đã kết thúc</Title>
+                    <Row gutter={[24, 24]}>
+                        {endedEvents.map(event => (
+                            <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
+                                <CardComponent event={event} />
+                            </Col>
+                        ))}
+                    </Row>
+                </>
             )}
         </>
     );
@@ -203,7 +253,8 @@ const HomePage = () => {
     const [displayedEvents, setDisplayedEvents] = useState([]); 
 
     const [categories, setCategories] = useState([]);
-    const [banners, setBanners] = useState([]);
+    // const [banners, setBanners] = useState([]);
+    const { banners, loading: bannerLoading } = useBanner();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
@@ -218,14 +269,12 @@ const HomePage = () => {
             setLoading(true);
             try {
                 // Gọi song song 3 API: Danh mục, Banner, và TẤT CẢ Sự kiện
-                const [catData, bannerData, allEventsData] = await Promise.all([
+                const [catData, allEventsData] = await Promise.all([
                     getCategories(),
-                    getActiveBanners(),
                     getPublicEvents() // Gọi không tham số để lấy tất cả
                 ]);
                 
                 setCategories(catData);
-                setBanners(bannerData);
                 setSourceEvents(allEventsData); // Lưu vào nguồn
                 setDisplayedEvents(allEventsData); // Ban đầu hiển thị tất cả
             } catch (err) {
@@ -249,6 +298,8 @@ const HomePage = () => {
             result = result.filter(e => new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now);
         } else if (filterStatus === 'upcoming') {
             result = result.filter(e => new Date(e.thoiGianBatDau) > now);
+        } else if (filterStatus === 'ended') {
+            result = result.filter(e => new Date(e.thoiGianKetThuc) < now);
         }
 
         // 2. Lọc theo Danh mục (Category Tab)
@@ -278,7 +329,7 @@ const HomePage = () => {
                         draggable={true}
                         className="home-banner-carousel"
                         style={{ 
-                            lineHeight: '400px',
+                            LineHeight: '400px',
                             background: '#364d79',
                             borderRadius: '20px',
                             overflow: 'hidden',
@@ -305,8 +356,13 @@ const HomePage = () => {
                 </div>
             )}
 
-            <Content style={{ padding: '0 20px' }}>
-                <div style={{ maxWidth: '1600px', margin: '0 auto', background: '#fff', padding: 24, minHeight: 380, borderRadius: 8 }}>
+            <Content>
+                <div style={{ 
+                    maxWidth: '100%', 
+                    margin: '0 auto', 
+                    background: '#fff', 
+                    padding: 24, 
+                    minHeight: 380 }}>
                     
                     {/* Hàng điều khiển Lọc và View */}
                     <Row justify="space-between" align="middle" style={{ marginBottom: 20 }} gutter={[16, 16]}>
@@ -316,6 +372,7 @@ const HomePage = () => {
                                 <Tabs.TabPane tab="Tất cả" key="all" />
                                 <Tabs.TabPane tab="Đang diễn ra" key="ongoing" />
                                 <Tabs.TabPane tab="Sắp diễn ra" key="upcoming" />
+                                <Tabs.TabPane tab="Đã kết thúc" key="ended" />
                             </Tabs>
                             
                             {/* Tab Danh mục */}

@@ -2,10 +2,13 @@ import { Table, Button, Space, Popconfirm, Modal, Form, Input, message, Image, S
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
+import { useBanner } from '../../context/BannerContext';
+
 const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingBanner, setEditingBanner] = useState(null);
+    const { refreshBanners } = useBanner();
 
     const showModal = (banner = null) => {
         setEditingBanner(banner);
@@ -18,8 +21,14 @@ const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
         setEditingBanner(null);
     };
 
-    const handleFinish = (values) => {
-        onSave(editingBanner ? editingBanner.id : null, values);
+    const handleFinish = async (values) => {
+        // Gọi hàm save của cha (AdminDashboardPage)
+        // Lưu ý: onSave của AdminDashboardPage là hàm async
+        await onSave(editingBanner ? editingBanner.id : null, values);
+        
+        // Sau khi lưu xong, gọi refresh để cập nhật global state
+        refreshBanners(); 
+        
         handleCancel();
     };
 
