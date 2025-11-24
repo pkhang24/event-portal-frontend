@@ -1,24 +1,31 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Layout, Typography, Button, Descriptions, Spin, Alert, message, Tag, Card, Row, Col } from 'antd';
-import { CalendarOutlined, EnvironmentOutlined, TeamOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Layout, Typography, Button, Spin, Alert, message, Card, Row, Col, Avatar, Breadcrumb, Divider, Space } from 'antd';
+import { 
+    CalendarOutlined, 
+    EnvironmentOutlined, 
+    TeamOutlined, 
+    FacebookFilled, 
+    GlobalOutlined, 
+    LinkOutlined,
+    UserOutlined
+} from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
 import { getEventDetail } from '../services/eventService';
 import { getCurrentUser } from '../services/authService';
-import api from '../services/api'; // Import api để gọi đăng ký
+import api from '../services/api';
 
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography;
 
 const EventDetailPage = () => {
-    const { id } = useParams(); // Lấy ID từ URL
+    const { id } = useParams();
     const navigate = useNavigate();
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [registering, setRegistering] = useState(false);
     const [error, setError] = useState(null);
-    const user = getCurrentUser(); // Lấy thông tin user hiện tại
-    
+    const user = getCurrentUser();
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -34,20 +41,19 @@ const EventDetailPage = () => {
         fetchEvent();
     }, [id]);
 
-    // Hàm xử lý Đăng ký
     const handleRegister = async () => {
         if (!user) {
             message.warning("Vui lòng đăng nhập để đăng ký!");
             navigate('/login');
             return;
         }
-
         setRegistering(true);
         try {
-            // Gọi API đăng ký
             await api.post('/registrations', { eventId: id });
             message.success("Đăng ký thành công! Vui lòng kiểm tra vé của bạn.");
-            navigate('/my-tickets'); // Chuyển hướng đến trang vé
+            // Reload lại trang để cập nhật trạng thái nút (hoặc gọi lại API getEventDetail)
+            const updatedEvent = await getEventDetail(id);
+            setEvent(updatedEvent);
         } catch (err) {
             message.error(err.response?.data?.message || "Đăng ký thất bại!");
         } finally {
@@ -60,74 +66,130 @@ const EventDetailPage = () => {
     if (!event) return null;
 
     return (
-        <Layout className="layout" style={{ minHeight: '100vh' }}>
+        <Layout className="layout" style={{ minHeight: '100vh', background: '#f5f7fa' }}> {/* Nền xám nhẹ hiện đại */}
             <MyNavbar />
-            <Content style={{ padding: '0 50px', marginTop: 30 }}>
-                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
-                    Quay lại
-                </Button>
-                <div style={{ background: '#fff', padding: 30, minHeight: 380, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                    
-                    <Row gutter={[32, 32]}>
-                        {/* Cột bên trái: Ảnh và Thông tin cơ bản */}
-                        <Col xs={24} md={10}>
-                            <img
-                                alt={event.tieuDe}
-                                src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
-                                style={{ width: '100%', borderRadius: 8, marginBottom: 20 }}
+            
+            <Content style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px', width: '100%' }}>
+                {/* Breadcrumb (Đường dẫn) */}
+                <Breadcrumb style={{ marginBottom: 20 }}>
+                    <Breadcrumb.Item><Link to="/">Trang chủ</Link></Breadcrumb.Item>
+                    <Breadcrumb.Item>{event.tieuDe}</Breadcrumb.Item>
+                </Breadcrumb>
+
+                {/* 1. BANNER LỚN Ở TRÊN CÙNG */}
+                <div style={{ marginBottom: 30, borderRadius: '16px', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}>
+                     <img
+                        alt={event.tieuDe}
+                        src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
+                        style={{ width: '100%', height: '400px', objectFit: 'cover', display: 'block' }}
+                    />
+                </div>
+
+                <Row gutter={[40, 24]}>
+                    {/* === CỘT TRÁI: NỘI DUNG CHÍNH === */}
+                    <Col xs={24} md={16}>
+                        {/* Tiêu đề & Mô tả ngắn */}
+                        <div style={{ marginBottom: 30 }}>
+                            <Title level={1} style={{ fontSize: '32px', marginBottom: 10 }}>{event.tieuDe}</Title>
+                            <Text type="secondary" style={{ fontSize: '16px' }}>{event.moTaNgan}</Text>
+                        </div>
+
+                        {/* Mô tả chi tiết */}
+                        <div style={{ marginBottom: 40 }}>
+                            <Title level={4}>Mô tả chi tiết</Title>
+                            <div 
+                                dangerouslySetInnerHTML={{ __html: event.noiDung }} 
+                                style={{ fontSize: '16px', lineHeight: '1.8', color: '#333' }} 
                             />
-                            <Card title="Thông tin sự kiện" bordered={false} style={{ background: '#fafafa' }}>
-                                <Descriptions column={1} layout="vertical">
-                                    <Descriptions.Item label={<><CalendarOutlined /> Thời gian</>}>
-                                        <div>Bắt đầu: <b>{new Date(event.thoiGianBatDau).toLocaleString('vi-VN')}</b></div>
-                                        <div>Kết thúc: <b>{new Date(event.thoiGianKetThuc).toLocaleString('vi-VN')}</b></div>
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label={<><EnvironmentOutlined /> Địa điểm</>}>
-                                        <b>{event.diaDiem}</b>
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label={<><TeamOutlined /> Số lượng chỗ</>}>
-                                        {event.soLuongGioiHan ? `${event.soLuongGioiHan} người` : <Tag color="green">Không giới hạn</Tag>}
-                                    </Descriptions.Item>
-                                     <Descriptions.Item label="Người tổ chức">
-                                        {event.tenNguoiDang}
-                                    </Descriptions.Item>
-                                </Descriptions>
-                                
+                        </div>
+                    </Col>
+
+                    {/* === CỘT PHẢI: THÔNG TIN ĐĂNG KÝ (STICKY) === */}
+                    <Col xs={24} md={8}>
+                        <div style={{ position: 'sticky', top: 20 }}>
+                            <Card 
+                                bordered={false} 
+                                style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.08)', borderRadius: '12px' }}
+                            >
                                 {/* Nút Đăng ký */}
                                 <Button 
                                     type="primary" 
                                     size="large" 
                                     block 
-                                    style={{ marginTop: 20, height: 50, fontSize: 18 }}
+                                    style={{ height: '50px', fontSize: '16px', fontWeight: '600', marginBottom: 24 }}
                                     onClick={handleRegister}
                                     loading={registering}
-                                    // Disable nếu: (chưa đăng nhập) HOẶC (không phải STUDENT) HOẶC (ĐÃ ĐĂNG KÝ RỒI)
                                     disabled={!user || user.role !== 'STUDENT' || event.isRegistered} 
                                 >
-                                    {/* Logic hiển thị chữ trên nút */}
-                                    {!user ? 'Đăng nhập để đăng ký' : 
-                                    (user.role !== 'STUDENT' ? 'Chỉ sinh viên mới được đăng ký' : 
-                                        (event.isRegistered ? 'Bạn đã đăng ký tham gia' : 'Đăng ký tham gia ngay') // <-- Thêm điều kiện này
-                                    )
+                                    {!user ? 'Đăng nhập để tham gia' : 
+                                      (user.role !== 'STUDENT' ? 'Dành cho sinh viên' : 
+                                        (event.isRegistered ? 'Đã đăng ký' : 'Đăng ký tham gia ngay')
+                                      )
                                     }
                                 </Button>
-                            </Card>
-                        </Col>
 
-                        {/* Cột bên phải: Nội dung chi tiết */}
-                        <Col xs={24} md={14}>
-                            <Typography>
-                                <Title level={2}>{event.tieuDe}</Title>
-                                <Paragraph type="secondary" style={{ fontSize: 16 }}>{event.moTaNgan}</Paragraph>
-                                <div style={{ marginTop: 30 }}>
-                                    <Title level={4}>Nội dung chi tiết</Title>
-                                    {/* Hiển thị nội dung HTML nếu có */}
-                                    <div dangerouslySetInnerHTML={{ __html: event.noiDung }} style={{ fontSize: 16, lineHeight: 1.6 }} />
+                                <Divider style={{ margin: '12px 0' }} />
+
+                                {/* List thông tin */}
+                                <Space direction="vertical" size={20} style={{ width: '100%' }}>
+                                    
+                                    {/* Thời gian */}
+                                    <div style={{ display: 'flex', gap: 15 }}>
+                                        <div style={{ background: '#e6f7ff', padding: '8px', borderRadius: '8px', height: 'fit-content' }}>
+                                            <CalendarOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '13px', color: '#777' }}>Thời gian</div>
+                                            <div style={{ fontWeight: 500 }}>
+                                                {new Date(event.thoiGianBatDau).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}, {new Date(event.thoiGianBatDau).toLocaleDateString('vi-VN')}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Địa điểm */}
+                                    <div style={{ display: 'flex', gap: 15 }}>
+                                        <div style={{ background: '#f6ffed', padding: '8px', borderRadius: '8px', height: 'fit-content' }}>
+                                            <EnvironmentOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '13px', color: '#777' }}>Địa điểm</div>
+                                            <div style={{ fontWeight: 500 }}>{event.diaDiem}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Số người */}
+                                    <div style={{ display: 'flex', gap: 15 }}>
+                                        <div style={{ background: '#fff7e6', padding: '8px', borderRadius: '8px', height: 'fit-content' }}>
+                                            <TeamOutlined style={{ fontSize: '20px', color: '#fa8c16' }} />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '13px', color: '#777' }}>Số người tham gia</div>
+                                            <div style={{ fontWeight: 500 }}>
+                                                {event.soLuongGioiHan ? `${event.soLuongGioiHan} người tối đa` : 'Không giới hạn'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Space>
+
+                                <Divider style={{ margin: '24px 0' }} />
+
+                                {/* Chia sẻ */}
+                                <div>
+                                    <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: 10 }}>Chia sẻ sự kiện</div>
+                                    <Space size="large">
+                                        <Button shape="circle" icon={<FacebookFilled style={{ color: '#3b5998' }} />} />
+                                        <Button shape="circle" icon={<GlobalOutlined style={{ color: '#1890ff' }} />} />
+                                        <Button shape="circle" icon={<LinkOutlined />} onClick={() => {
+                                            navigator.clipboard.writeText(window.location.href);
+                                            message.success("Đã copy link!");
+                                        }} />
+                                    </Space>
                                 </div>
-                            </Typography>
-                        </Col>
-                    </Row>
-                </div>
+
+                            </Card>
+                        </div>
+                    </Col>
+                </Row>
             </Content>
         </Layout>
     );

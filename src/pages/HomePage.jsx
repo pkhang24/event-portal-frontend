@@ -5,7 +5,7 @@ import { getActiveBanners } from '../services/api';
 import { useBanner } from '../context/BannerContext';
 import MyNavbar from '../components/MyNavbar';
 import MyFooter from '../components/MyFooter';
-import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Tabs, Segmented } from 'antd';
+import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Select, Segmented } from 'antd';
 import { CalendarOutlined, BarsOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
@@ -188,60 +188,51 @@ export const CardComponent = ({ event }) => {
 const EventListView = ({ events }) => {
     const now = new Date();
     
-    // 1. Chia làm 3 nhóm (Thêm nhóm endedEvents)
+    // Phân loại sự kiện
     const ongoingEvents = events.filter(e => new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now);
     const upcomingEvents = events.filter(e => new Date(e.thoiGianBatDau) > now);
-    const endedEvents = events.filter(e => new Date(e.thoiGianKetThuc) < now); // <--- THÊM DÒNG NÀY
+    const endedEvents = events.filter(e => new Date(e.thoiGianKetThuc) < now);
 
-    // Nếu không có sự kiện nào
-    if (events.length === 0) {
-        return <Alert message="Không tìm thấy sự kiện nào phù hợp." type="info" showIcon />;
-    }
+    if (events.length === 0) return <Alert message="Không tìm thấy sự kiện nào." type="info" showIcon />;
 
     return (
-        <>
-            {/* 2. Phần Đang diễn ra */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+            {/* 1. Đang diễn ra */}
             {ongoingEvents.length > 0 && (
-                <>
-                    <Title level={3} style={{ marginTop: 30 }}>Sự kiện đang diễn ra</Title>
+                <section>
+                    <Title level={3} style={{ marginBottom: 20, color: '#333' }}>Sự kiện đang diễn ra</Title>
                     <Row gutter={[24, 24]}>
                         {ongoingEvents.map(event => (
-                            <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
-                                <CardComponent event={event} />
-                            </Col>
+                            <Col xs={24} sm={12} md={8} lg={6} key={event.id}><CardComponent event={event} /></Col>
                         ))}
                     </Row>
-                </>
+                </section>
             )}
 
-            {/* 3. Phần Sắp diễn ra */}
+            {/* 2. Sắp diễn ra */}
             {upcomingEvents.length > 0 && (
-                <>
-                    <Title level={3} style={{ marginTop: 30 }}>Sự kiện sắp diễn ra </Title>
+                <section>
+                    <Title level={3} style={{ marginBottom: 20, color: '#333' }}>Sự kiện sắp diễn ra</Title>
                     <Row gutter={[24, 24]}>
                         {upcomingEvents.map(event => (
-                            <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
-                                <CardComponent event={event} />
-                            </Col>
+                            <Col xs={24} sm={12} md={8} lg={6} key={event.id}><CardComponent event={event} /></Col>
                         ))}
                     </Row>
-                </>
+                </section>
             )}
-            
-            {/* 4. Phần Đã kết thúc (MỚI) */}
+
+            {/* 3. Đã kết thúc */}
             {endedEvents.length > 0 && (
-                <>
-                    <Title level={3} style={{ marginTop: 30 }}>Sự kiện đã kết thúc</Title>
+                <section>
+                    <Title level={3} style={{ marginBottom: 20, color: '#888' }}>Sự kiện đã kết thúc</Title>
                     <Row gutter={[24, 24]}>
                         {endedEvents.map(event => (
-                            <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
-                                <CardComponent event={event} />
-                            </Col>
+                            <Col xs={24} sm={12} md={8} lg={6} key={event.id}><CardComponent event={event} /></Col>
                         ))}
                     </Row>
-                </>
+                </section>
             )}
-        </>
+        </div>
     );
 };
 
@@ -291,17 +282,6 @@ const HomePage = () => {
     // Chạy mỗi khi user đổi tab status hoặc category
     useEffect(() => {
         let result = [...sourceEvents]; // Copy mảng gốc
-        const now = new Date();
-
-        // 1. Lọc theo Trạng thái (Status Tab)
-        if (filterStatus === 'ongoing') {
-            result = result.filter(e => new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now);
-        } else if (filterStatus === 'upcoming') {
-            result = result.filter(e => new Date(e.thoiGianBatDau) > now);
-        } else if (filterStatus === 'ended') {
-            result = result.filter(e => new Date(e.thoiGianKetThuc) < now);
-        }
-
         // 2. Lọc theo Danh mục (Category Tab)
         if (filterCategory !== 'all_cat') {
             // Kiểm tra xem event có thuộc category này không
@@ -310,19 +290,19 @@ const HomePage = () => {
         }
 
         setDisplayedEvents(result); // Cập nhật danh sách hiển thị
-    }, [filterStatus, filterCategory, sourceEvents]); 
+    }, [filterCategory, sourceEvents]); 
 
 
     return (
-        <Layout className="layout" style={{ minHeight: '100vh' }}>
+        <Layout className="layout" style={{ minHeight: '100vh', background: '#fff' }}>
             <MyNavbar />
 
             {/* === PHẦN BANNER (Đã sửa style đẹp) === */}
             {!loading && !error && banners.length > 0 && ( // Không hiện spinner riêng cho banner để tránh giật
                 <div style={{ 
                     maxWidth: '1300px', 
-                    margin: '24px auto', 
-                    padding: '0 24px',
+                    margin: '50px', 
+                    padding: '0 20px',
                 }}>
                     <Carousel 
                         autoplay 
@@ -356,56 +336,45 @@ const HomePage = () => {
                 </div>
             )}
 
-            <Content>
-                <div style={{ 
-                    maxWidth: '100%', 
-                    margin: '0 auto', 
-                    background: '#fff', 
-                    padding: 24, 
-                    minHeight: 380 }}>
+            <Content style={{ padding: '0 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+                {/* Hàng điều khiển: Lọc bên trái, View bên phải */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
                     
-                    {/* Hàng điều khiển Lọc và View */}
-                    <Row justify="space-between" align="middle" style={{ marginBottom: 20 }} gutter={[16, 16]}>
-                        <Col xs={24} md={18}>
-                            {/* Tab Trạng thái */}
-                            <Tabs defaultActiveKey="all" onChange={setFilterStatus} style={{ marginBottom: 10 }}>
-                                <Tabs.TabPane tab="Tất cả" key="all" />
-                                <Tabs.TabPane tab="Đang diễn ra" key="ongoing" />
-                                <Tabs.TabPane tab="Sắp diễn ra" key="upcoming" />
-                                <Tabs.TabPane tab="Đã kết thúc" key="ended" />
-                            </Tabs>
-                            
-                            {/* Tab Danh mục */}
-                            <Tabs defaultActiveKey="all_cat" onChange={setFilterCategory} type="card" size="small">
-                                <Tabs.TabPane tab="Tất cả Danh mục" key="all_cat" />
-                                {categories.map(cat => (
-                                    <Tabs.TabPane tab={cat.tenDanhMuc} key={cat.id} />
-                                ))}
-                            </Tabs>
-                        </Col>
-                        
-                        {/* Nút chuyển View */}
-                        <Col xs={24} md={6} style={{ textAlign: 'right' }}>
-                            <Segmented
-                                options={[
-                                    { value: 'List', icon: <BarsOutlined /> },
-                                    { value: 'Calendar', icon: <CalendarOutlined /> },
-                                ]}
-                                value={viewMode}
-                                onChange={setViewMode}
-                            />
-                        </Col>
-                    </Row>
+                    {/* Dropdown Lọc danh mục (Giống ảnh mẫu) */}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ marginRight: 10, fontWeight: 600, fontSize: '16px' }}>Lọc sự kiện:</span>
+                        <Select
+                            defaultValue="all_cat"
+                            style={{ width: 220 }}
+                            size="large"
+                            onChange={setFilterCategory}
+                            options={[
+                                { value: 'all_cat', label: 'Tất cả danh mục' },
+                                ...categories.map(cat => ({ value: cat.id, label: cat.tenDanhMuc }))
+                            ]}
+                        />
+                    </div>
 
-                    {/* Kết quả hiển thị */}
+                    {/* Chuyển đổi chế độ xem */}
+                    <Segmented
+                        options={[
+                            { value: 'List', icon: <BarsOutlined /> },
+                            { value: 'Calendar', icon: <CalendarOutlined /> },
+                        ]}
+                        value={viewMode}
+                        onChange={setViewMode}
+                        size="large"
+                    />
+                </div>
+
+                {/* Nội dung chính */}
+                <div style={{ minHeight: 380 }}>
                     {loading ? (
-                         <div style={{ textAlign: 'center', padding: 50 }}><Spin size="large" /></div>
-                    ) : error ? (
-                        <Alert message={error} type="error" showIcon />
+                         <div style={{ textAlign: 'center', padding: 100 }}><Spin size="large" /></div>
                     ) : (
                         viewMode === 'List' ? 
                         <EventListView events={displayedEvents} /> : 
-                        <EventCalendarView events={displayedEvents} />
+                        <EventCalendarView events={displayedEvents} /> // Nhớ uncomment hàm này nếu dùng
                     )}
                 </div>
             </Content>

@@ -1,56 +1,49 @@
-import { Table, Button, Space, Popconfirm, Modal, Form, Input, message, Image, Switch } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Popconfirm, Modal, Form, Input, Switch, Image } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined, UndoOutlined, DeleteFilled } from '@ant-design/icons';
 import { useState } from 'react';
 
-import { useBanner } from '../../context/BannerContext';
-
-const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
+const BannerManagementTab = ({ banners, loading, viewMode = 'list', onSave, onDelete, onRestore }) => {
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingBanner, setEditingBanner] = useState(null);
-    const { refreshBanners } = useBanner();
 
     const showModal = (banner = null) => {
         setEditingBanner(banner);
-        form.setFieldsValue(banner ? banner : { imageUrl: '', isActive: true });
+        // Set active mặc định là true nếu tạo mới
+        form.setFieldsValue(banner ? banner : { imageUrl: '', active: true });
         setIsModalVisible(true);
     };
 
-    const handleCancel = () => {
+    const handleFinish = (values) => {
+        onSave(editingBanner ? editingBanner.id : null, values);
         setIsModalVisible(false);
-        setEditingBanner(null);
     };
 
-    const handleFinish = async (values) => {
-        // Gọi hàm save của cha (AdminDashboardPage)
-        // Lưu ý: onSave của AdminDashboardPage là hàm async
-        await onSave(editingBanner ? editingBanner.id : null, values);
-        
-        // Sau khi lưu xong, gọi refresh để cập nhật global state
-        refreshBanners(); 
-        
-        handleCancel();
-    };
-
-    const columns = [
-        { 
-            title: 'Ảnh Banner', 
-            dataIndex: 'imageUrl', 
-            key: 'imageUrl',
-            render: (url) => <Image src={url} width={150} />
-        },
-        { 
-            title: 'Trạng thái', 
-            dataIndex: 'isActive', 
-            key: 'isActive',
-            render: (isActive) => isActive ? "Đang hoạt động" : "Đã tắt"
-        },
+    // Columns List
+    const listColumns = [
+        { title: 'Ảnh', dataIndex: 'imageUrl', key: 'imageUrl', render: (url) => <Image src={url} width={120} /> },
+        { title: 'Trạng thái', dataIndex: 'active', key: 'active', render: (active) => active ? "Hiện" : "Ẩn" },
         {
             title: 'Hành động', key: 'action', render: (_, record) => (
-                <Space>
-                    <Button icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
-                    <Popconfirm title="Chuyển banner này vào thùng rác?" onConfirm={() => onDelete(record.id)}>
-                        <Button danger icon={<DeleteOutlined />}>Xóa</Button>
+                <Space size="large">
+                    <Button size="medium" icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
+                    <Popconfirm title="Xóa?" onConfirm={() => onDelete(record.id)}>
+                        <Button size="medium" danger icon={<DeleteOutlined />}>Xóa</Button>
+                    </Popconfirm>
+                </Space>
+            )
+        }
+    ];
+
+    // Columns Trash
+    const trashColumns = [
+        { title: 'Ảnh', dataIndex: 'imageUrl', key: 'imageUrl', render: (url) => <Image src={url} width={120} /> },
+        {
+            title: 'Hành động', key: 'action', render: (_, record) => (
+                <Space size="large">
+                    <Button size="medium" type="primary" ghost icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>Khôi phục</Button>
+                    <Popconfirm title="Xóa VĨNH VIỄN?" onConfirm={() => onDelete(record.id)}>
+                        <Button size="medium" danger icon={<DeleteFilled />}>Xóa vĩnh viễn</Button>
                     </Popconfirm>
                 </Space>
             )
@@ -59,38 +52,23 @@ const BannerManagementTab = ({ banners, loading, onSave, onDelete }) => {
 
     return (
         <>
-            <Button 
-                icon={<PlusOutlined />} 
-                type="primary" 
-                onClick={() => showModal(null)} 
-                style={{ marginBottom: 16 }}
-            >
-                Thêm Banner mới
-            </Button>
-            <Table
-                dataSource={banners}
-                columns={columns}
-                rowKey="id"
-                loading={loading}
+            {viewMode === 'list' && (
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal(null)} style={{ marginBottom: 16 }}>
+                    Thêm Banner
+                </Button>
+            )}
+            <Table 
+                dataSource={Array.isArray(banners) ? banners : []} 
+                columns={viewMode === 'list' ? listColumns : trashColumns} 
+                rowKey="id" loading={loading} pagination={{ pageSize: 5 }}
             />
-            
-            <Modal
-                title={editingBanner ? "Sửa Banner" : "Thêm Banner mới"}
-                open={isModalVisible}
-                onCancel={handleCancel}
-                onOk={() => form.submit()}
-            >
+            <Modal title={editingBanner ? "Sửa Banner" : "Thêm Banner"} open={isModalVisible} onCancel={() => setIsModalVisible(false)} onOk={() => form.submit()}>
                 <Form form={form} layout="vertical" onFinish={handleFinish}>
-                    <Form.Item name="imageUrl" label="Link Ảnh (URL)" rules={[{ required: true, type: 'url' }]}>
-                        <Input />
-                    </Form.Item>
-                    <Form.Item name="isActive" label="Trạng thái" valuePropName="checked">
-                        <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
-                    </Form.Item>
+                    <Form.Item name="imageUrl" label="URL Ảnh" rules={[{ required: true, type: 'url' }]}><Input /></Form.Item>
+                    <Form.Item name="active" label="Trạng thái" valuePropName="checked"><Switch /></Form.Item>
                 </Form>
             </Modal>
         </>
     );
 };
-
 export default BannerManagementTab;

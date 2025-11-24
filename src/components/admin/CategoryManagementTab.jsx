@@ -1,8 +1,8 @@
-import { Table, Button, Space, Popconfirm, Modal, Form, Input, message } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Popconfirm, Modal, Form, Input } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined, UndoOutlined, DeleteFilled } from '@ant-design/icons';
 import { useState } from 'react';
 
-const CategoryManagementTab = ({ categories, loading, onSave, onDelete }) => {
+const CategoryManagementTab = ({ categories, loading, viewMode = 'list', onSave, onDelete, onRestore }) => {
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
@@ -13,30 +13,37 @@ const CategoryManagementTab = ({ categories, loading, onSave, onDelete }) => {
         setIsModalVisible(true);
     };
 
-    const handleCancel = () => {
-        setIsModalVisible(false);
-        setEditingCategory(null);
-    };
-
     const handleFinish = (values) => {
-        // Gọi hàm onSave của cha (truyền cả ID (nếu sửa) và data)
         onSave(editingCategory ? editingCategory.id : null, values);
-        handleCancel();
+        setIsModalVisible(false);
     };
 
-    const columns = [
-        { title: 'ID', dataIndex: 'id', key: 'id' },
+    // Columns cho List
+    const listColumns = [
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
         { title: 'Tên Danh mục', dataIndex: 'tenDanhMuc', key: 'tenDanhMuc' },
         {
             title: 'Hành động', key: 'action', render: (_, record) => (
-                <Space>
-                    <Button icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
-                    <Popconfirm
-                        title="Xóa danh mục?"
-                        description="Chuyển danh mục này vào thùng rác?"
-                        onConfirm={() => onDelete(record.id)}
-                    >
-                        <Button danger icon={<DeleteOutlined />}>Xóa</Button>
+                <Space size="large">
+                    <Button size="medium" icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
+                    <Popconfirm title="Xóa danh mục?" onConfirm={() => onDelete(record.id)}>
+                        <Button size="medium" danger icon={<DeleteOutlined />}>Xóa</Button>
+                    </Popconfirm>
+                </Space>
+            )
+        }
+    ];
+
+    // Columns cho Trash
+    const trashColumns = [
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
+        { title: 'Tên Danh mục', dataIndex: 'tenDanhMuc', key: 'tenDanhMuc' },
+        {
+            title: 'Hành động', key: 'action', render: (_, record) => (
+                <Space size="large">
+                    <Button size="medium" type="primary" ghost icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>Khôi phục</Button>
+                    <Popconfirm title="Xóa VĨNH VIỄN?" onConfirm={() => onDelete(record.id)}>
+                        <Button size="medium" danger icon={<DeleteFilled />}>Xóa vĩnh viễn</Button>
                     </Popconfirm>
                 </Space>
             )
@@ -45,34 +52,23 @@ const CategoryManagementTab = ({ categories, loading, onSave, onDelete }) => {
 
     return (
         <>
-            <Button 
-                icon={<PlusOutlined />} 
-                type="primary" 
-                onClick={() => showModal(null)} 
-                style={{ marginBottom: 16 }}
-            >
-                Thêm Danh mục mới
-            </Button>
-            <Table
-                dataSource={categories}
-                columns={columns}
-                rowKey="id"
+            {viewMode === 'list' && (
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal(null)} style={{ marginBottom: 16 }}>
+                    Thêm Danh mục
+                </Button>
+            )}
+            
+            <Table 
+                dataSource={Array.isArray(categories) ? categories : []} 
+                columns={viewMode === 'list' ? listColumns : trashColumns} 
+                rowKey="id" 
                 loading={loading}
+                pagination={{ pageSize: 8 }}
             />
             
-            {/* Modal Thêm/Sửa */}
-            <Modal
-                title={editingCategory ? "Sửa Danh mục" : "Thêm Danh mục mới"}
-                open={isModalVisible}
-                onCancel={handleCancel}
-                onOk={() => form.submit()} // Tự động trigger onFinish
-            >
+            <Modal title={editingCategory ? "Sửa Danh mục" : "Thêm Danh mục"} open={isModalVisible} onCancel={() => setIsModalVisible(false)} onOk={() => form.submit()}>
                 <Form form={form} layout="vertical" onFinish={handleFinish}>
-                    <Form.Item
-                        name="tenDanhMuc"
-                        label="Tên Danh mục"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}
-                    >
+                    <Form.Item name="tenDanhMuc" label="Tên Danh mục" rules={[{ required: true }]}>
                         <Input />
                     </Form.Item>
                 </Form>

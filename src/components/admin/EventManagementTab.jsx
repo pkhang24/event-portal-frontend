@@ -1,66 +1,66 @@
 import { Table, Tag, Button, Space, Popconfirm } from 'antd';
-import { CheckOutlined, DeleteOutlined } from '@ant-design/icons';
-// Xóa hết các import: useEffect, useState, adminService, eventService
+import { CheckOutlined, DeleteOutlined, UndoOutlined, DeleteFilled } from '@ant-design/icons';
 
-/**
- * Đây là component "con" (dumb component).
- * Nó nhận 'events', 'loading' và các hàm xử lý từ component cha (AdminDashboardPage).
- */
-const EventManagementTab = ({ events, loading, onApprove, onDelete }) => {
+const EventManagementTab = ({ 
+    events, 
+    loading, 
+    viewMode = 'list', // 'list' hoặc 'trash'
+    onApprove, 
+    onDelete, // Xử lý xóa mềm hoặc xóa cứng tùy viewMode
+    onRestore // Xử lý khôi phục
+}) => {
 
-    // Xóa toàn bộ: useState, useEffect, fetchEvents, handleApprove, handleDelete
-    // Vì component cha (AdminDashboardPage) sẽ làm hết việc này.
-
-    // Cấu hình cột (Giữ nguyên, nhưng sửa lại hàm onClick)
-    const columns = [
+    // Cột cho Danh sách chính
+    const listColumns = [
+        { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'tieuDe', width: '30%' },
+        { title: 'Người tạo', dataIndex: 'tenNguoiDang', key: 'tenNguoiDang' },
         {
-            title: 'Tiêu đề',
-            dataIndex: 'tieuDe',
-            key: 'tieuDe',
-            width: '30%',
-        },
-        {
-            title: 'Người tạo',
-            dataIndex: 'tenNguoiDang',
-            key: 'tenNguoiDang',
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'trangThai',
-            key: 'trangThai',
+            title: 'Trạng thái', dataIndex: 'trangThai', key: 'trangThai',
             render: (status) => (
                 <Tag color={status === 'PUBLISHED' ? 'green' : 'orange'}>
-                    {status === 'PUBLISHED' ? 'Đã duyệt' : 'Chờ duyệt (Draft)'}
+                    {status === 'PUBLISHED' ? 'Đã duyệt' : 'Chờ duyệt'}
                 </Tag>
             )
         },
         {
-            title: 'Hành động',
-            key: 'action',
+            title: 'Hành động', key: 'action',
             render: (_, record) => (
-                <Space size="middle">
-                    {/* Chỉ hiển thị nút Duyệt nếu đang là DRAFT */}
+                <Space size="large">
                     {record.trangThai === 'DRAFT' && (
-                        <Button 
-                            type="primary" 
-                            icon={<CheckOutlined />} 
-                            // Sửa lại: Gọi hàm onApprove từ props (do cha truyền xuống)
-                            onClick={() => onApprove(record.id)}
-                        >
+                        <Button type="primary" size="medium" icon={<CheckOutlined />} onClick={() => onApprove(record.id)}>
                             Duyệt
                         </Button>
                     )}
                     <Popconfirm
                         title="Chuyển vào thùng rác?"
-                        description="Chuyển sự kiện này vào thùng rác?"
-                        // Sửa lại: Gọi hàm onDelete từ props (do cha truyền xuống)
                         onConfirm={() => onDelete(record.id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
+                        okText="Xóa" cancelText="Hủy"
                     >
-                        <Button danger icon={<DeleteOutlined />}>
-                            Xóa
-                        </Button>
+                        <Button size="medium" danger icon={<DeleteOutlined />}>Xóa</Button>
+                    </Popconfirm>
+                </Space>
+            )
+        },
+    ];
+
+    // Cột cho Thùng rác
+    const trashColumns = [
+        { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'tieuDe', width: '30%' },
+        { title: 'Người tạo', dataIndex: 'tenNguoiDang', key: 'tenNguoiDang' },
+        {
+            title: 'Hành động', key: 'action',
+            render: (_, record) => (
+                <Space size="large">
+                    <Button type="primary" ghost size="medium" icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>
+                        Khôi phục
+                    </Button>
+                    <Popconfirm
+                        title="Xóa VĨNH VIỄN?"
+                        description="Không thể hoàn tác!"
+                        onConfirm={() => onDelete(record.id)}
+                        okText="Xóa vĩnh viễn" cancelText="Hủy"
+                    >
+                        <Button size="medium" danger icon={<DeleteFilled />}>Xóa vĩnh viễn</Button>
                     </Popconfirm>
                 </Space>
             )
@@ -69,10 +69,11 @@ const EventManagementTab = ({ events, loading, onApprove, onDelete }) => {
 
     return (
         <Table 
-            dataSource={events} // Dùng 'events' từ props
-            columns={columns} 
+            dataSource={Array.isArray(events) ? events : []} 
+            columns={viewMode === 'list' ? listColumns : trashColumns} 
             rowKey="id" 
-            loading={loading} // Dùng 'loading' từ props
+            loading={loading} 
+            pagination={{ pageSize: 8 }}
         />
     );
 };
