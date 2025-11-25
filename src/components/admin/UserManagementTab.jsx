@@ -1,28 +1,22 @@
-import { Table, Select, Button, Space, Popconfirm, Tag } from 'antd';
-import { EditOutlined, DeleteOutlined, EyeOutlined, UndoOutlined, DeleteFilled } from '@ant-design/icons';
+import { Table, Select, Button, Space, Popconfirm, Tag, Tooltip } from 'antd';
+import { EditOutlined, DeleteOutlined, EyeOutlined, UndoOutlined, DeleteFilled, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
-/**
- * Component bảng quản lý User đa năng.
- * Hỗ trợ 2 chế độ hiển thị dựa trên prop 'viewMode':
- * 1. 'list': Hiển thị danh sách chính (Có thể sửa role, edit, soft delete)
- * 2. 'trash': Hiển thị thùng rác (Chỉ xem role, restore, hard delete)
- */
 const UserManagementTab = ({ 
     users, 
     loading, 
-    viewMode = 'list', // Mặc định là list
+    viewMode = 'list', 
     onRoleChange, 
     onEdit, 
-    onDelete, // Hàm này ở cha sẽ tự xử lý soft hay hard delete dựa vào view
+    onDelete, 
     onView,
-    onRestore 
+    onRestore,
+    onLock // Thêm prop cho hành động khóa (cần truyền từ cha xuống sau này)
 }) => {
 
-    // --- CẤU HÌNH CỘT CHO CHẾ ĐỘ DANH SÁCH (LIST) ---
     const listColumns = [
-        { title: 'ID', dataIndex: 'id', key: 'id', width: 70, sorter: (a, b) => a.id - b.id },
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 60, sorter: (a, b) => a.id - b.id },
         { title: 'Họ tên', dataIndex: 'hoTen', key: 'hoTen', sorter: (a, b) => a.hoTen.localeCompare(b.hoTen) },
         // { title: 'Email', dataIndex: 'email', key: 'email' },
         // { title: 'MSSV', dataIndex: 'mssv', key: 'mssv' },
@@ -30,6 +24,7 @@ const UserManagementTab = ({
             title: 'Vai trò',
             dataIndex: 'role',
             key: 'role',
+            width: 130,
             filters: [
                 { text: 'Student', value: 'STUDENT' },
                 { text: 'Poster', value: 'POSTER' },
@@ -39,48 +34,92 @@ const UserManagementTab = ({
             render: (role, record) => (
                 <Select
                     defaultValue={role}
-                    style={{ width: 120 }}
+                    style={{ width: '100%' }}
                     onChange={(newRole) => onRoleChange(record.id, newRole)}
-                    disabled={role === 'ADMIN'} // Không sửa quyền của Admin khác
+                    disabled={role === 'ADMIN'}
+                    size="medium" // Dropdown nhỏ gọn
                 >
                     <Option value="STUDENT">Student</Option>
                     <Option value="POSTER">Poster</Option>
-                    <Option value="ADMIN">Admin</Option>
+                    {/* <Option value="ADMIN">Admin</Option> */}
                 </Select>
             )
         },
         {
             title: 'Hành động',
             key: 'action',
+            width: 200, // Cố định chiều rộng cột hành động
             render: (_, record) => (
-                <Space size="large">
-                    <Button size="medium" icon={<EyeOutlined />} onClick={() => onView(record)} ghost type="primary">Xem</Button>
-                    <Button size="medium" icon={<EditOutlined />} onClick={() => onEdit(record)}>Sửa</Button>
-                    <Popconfirm
-                        title="Chuyển vào thùng rác?"
-                        onConfirm={() => onDelete(record.id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                        disabled={record.role === 'ADMIN'}
-                    >
-                        <Button size="medium" danger icon={<DeleteOutlined />} disabled={record.role === 'ADMIN'}>Xóa</Button>
-                    </Popconfirm>
+                <Space size="small">
+                    <Tooltip title="Xem chi tiết">
+                        <Button 
+                            size="medium" 
+                            icon={<EyeOutlined />} 
+                            onClick={() => onView(record)} 
+                            style={{ color: '#1677ff', borderColor: '#1677ff' }} 
+                        />
+                    </Tooltip>
+                    
+                    <Tooltip title="Sửa thông tin">
+                        <Button 
+                            size="medium" 
+                            icon={<EditOutlined />} 
+                            onClick={() => onEdit(record)} 
+                        />
+                    </Tooltip>
+
+                    {/* Nút Khóa Tài khoản (Mới) */}
+                    <Tooltip title={record.isLocked ? "Mở khóa tài khoản" : "Khóa tài khoản"}>
+                        <Popconfirm
+                            title={record.isLocked ? "Mở khóa tài khoản này?" : "Khóa tài khoản này?"}
+                            description={record.isLocked ? "Người dùng sẽ có thể đăng nhập lại." : "Người dùng sẽ không thể đăng nhập."}
+                            onConfirm={() => onLock && onLock(record.id)}
+                            okText={record.isLocked ? "Mở khóa" : "Khóa"}
+                            cancelText="Hủy"
+                            disabled={record.role === 'ADMIN'}
+                        >
+                            <Button 
+                                size="medium" 
+                                // Nếu đang khóa -> Icon Mở khóa (Xanh), Ngược lại -> Icon Khóa (Cam)
+                                icon={record.isLocked ? <LockOutlined /> : <UnlockOutlined />} 
+                                style={{ 
+                                    color: record.isLocked ? '#faad14' : '#52c41a', 
+                                    borderColor: record.isLocked ? '#faad14' : '#52c41a' 
+                                }}
+                                disabled={record.role === 'ADMIN'}
+                            />
+                        </Popconfirm>
+                    </Tooltip>
+
+                    <Tooltip title="Xóa (Thùng rác)">
+                        <Popconfirm
+                            title="Chuyển vào thùng rác?"
+                            onConfirm={() => onDelete(record.id)}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                            disabled={record.role === 'ADMIN'}
+                        >
+                            <Button 
+                                size="medium" 
+                                danger 
+                                icon={<DeleteOutlined />} 
+                                disabled={record.role === 'ADMIN'} 
+                            />
+                        </Popconfirm>
+                    </Tooltip>
                 </Space>
             )
         }
     ];
 
-    // --- CẤU HÌNH CỘT CHO CHẾ ĐỘ THÙNG RÁC (TRASH) ---
     const trashColumns = [
-        { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
+        { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
         { title: 'Họ tên', dataIndex: 'hoTen', key: 'hoTen' },
         // { title: 'Email', dataIndex: 'email', key: 'email' },
-        // { title: 'MSSV', dataIndex: 'mssv', key: 'mssv' },
         { 
             title: 'Vai trò', 
             dataIndex: 'role', 
             key: 'role',
-            // Trong thùng rác không cho sửa Role, chỉ hiện Tag
             render: (role) => (
                 <Tag color={role === 'ADMIN' ? 'red' : role === 'POSTER' ? 'blue' : 'green'}>
                     {role}
@@ -91,20 +130,20 @@ const UserManagementTab = ({
             title: 'Hành động',
             key: 'action',
             render: (_, record) => (
-                <Space size="large">
+                <Space size="small">
                     <Button 
                         size="medium" 
+                        type="primary" 
+                        ghost 
                         icon={<UndoOutlined />} 
                         onClick={() => onRestore(record.id)}
-                        type="primary"
-                        ghost
                     >
                         Khôi phục
                     </Button>
                     <Popconfirm
                         title="Xóa VĨNH VIỄN?"
                         description="Hành động này không thể hoàn tác!"
-                        onConfirm={() => onDelete(record.id)} // Gọi hàm delete (cha sẽ xử lý là hard delete)
+                        onConfirm={() => onDelete(record.id)}
                         okText="Xóa vĩnh viễn"
                         cancelText="Hủy"
                     >
@@ -115,7 +154,6 @@ const UserManagementTab = ({
         }
     ];
 
-    // --- QUYẾT ĐỊNH DÙNG CỘT NÀO ---
     const columns = viewMode === 'list' ? listColumns : trashColumns;
 
     return (
@@ -124,7 +162,8 @@ const UserManagementTab = ({
             columns={columns}
             rowKey="id"
             loading={loading}
-            pagination={{ pageSize: 8 }}
+            pagination={{ pageSize: 6 }}
+            size="large" // Bảng kích thước trung bình, gọn hơn default
         />
     );
 };

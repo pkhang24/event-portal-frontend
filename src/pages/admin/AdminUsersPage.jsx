@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Button, Radio, message, Modal, Form, Input, Select, Descriptions } from 'antd';
 import { PlusOutlined, DeleteOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import UserManagementTab from '../../components/admin/UserManagementTab';
+import { toggleUserLock } from '../../services/adminService';
 import { 
     getAllUsers, createUser, updateUser, softDeleteUser, updateUserRole, // CRUD
     getDeletedUsers, restoreUser, permanentDeleteUser // Trash
@@ -43,6 +44,22 @@ const AdminUsersPage = () => {
     const handleRoleChange = async (id, role) => {
         try { await updateUserRole(id, role); messageApi.success("Đổi quyền thành công!"); fetchData(); }
         catch (e) { messageApi.error("Lỗi đổi quyền"); }
+    };
+
+    const handleToggleLock = async (userId) => {
+        try {
+            // Phải có 'await' ở đây để đợi Backend trả lời xong
+            await toggleUserLock(userId);
+            
+            // Nếu dòng trên thành công (không lỗi), dòng này mới chạy
+            messageApi.success("Đã thay đổi trạng thái khóa tài khoản!");
+            
+            fetchData(); // Tải lại danh sách để cập nhật icon
+        } catch (err) {
+            // Nếu dòng 'await' ở trên bị lỗi, nó nhảy thẳng xuống đây (bỏ qua message success)
+            console.error("Lỗi khóa user:", err);
+            messageApi.error("Thao tác thất bại.");
+        }
     };
 
     // Xử lý Xóa (Soft hoặc Hard tùy vào view)
@@ -121,6 +138,7 @@ const AdminUsersPage = () => {
                     // Truyền view xuống để component con biết đang ở chế độ nào mà render nút bấm
                     viewMode={view} 
                     onRoleChange={handleRoleChange}
+                    onLock={handleToggleLock}
                     onEdit={handleOpenModal}
                     onDelete={handleDelete} // Hàm này tự lo liệu soft/hard delete
                     onView={handleOpenView}

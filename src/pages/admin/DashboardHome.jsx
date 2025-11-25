@@ -1,92 +1,127 @@
 import { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Spin, message, List, Avatar, Tag } from 'antd';
+import { Row, Col, Card, Statistic, Spin, message, List, Avatar, Tag, Typography } from 'antd';
 import { 
     UserOutlined, CalendarOutlined, CheckCircleOutlined, 
-    ArrowUpOutlined, ArrowDownOutlined, BellOutlined, PlusCircleOutlined
+    ArrowUpOutlined, ArrowDownOutlined, BellOutlined, FormOutlined, 
+    ClockCircleOutlined, EnvironmentOutlined, PieChartOutlined,
+    BarChartOutlined, HistoryOutlined
 } from '@ant-design/icons';
-import { getDashboardStats, getTopEventStats } from '../../services/adminService';
+import { Link } from 'react-router-dom';
+import moment from 'moment';
+import 'moment/locale/vi';
+
+// Import Services
+import { 
+    getDashboardStats, 
+    getTopEventStats, 
+    getTopCategoryStats, 
+    getRecentActivities 
+} from '../../services/adminService';
+import { getPublicEvents } from '../../services/eventService'; // Import thêm cái này
+
+// Import Chart
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+moment.locale('vi');
+
+const { Text } = Typography;
 
 const DashboardHome = () => {
-    const [stats, setStats] = useState({});
-    const [chartData, setChartData] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // Dữ liệu Mock cho các phần chưa có API
-    const recentActivities = [
-        { title: 'Nguyễn Văn A đã đăng ký tham gia sự kiện', time: 'Vừa xong', type: 'register' },
-        { title: 'Admin đã tạo sự kiện mới', time: '1 giờ trước', type: 'create_event' },
-        { title: 'Trần Thị B đăng ký tài khoản', time: '2 giờ trước', type: 'new_user' },
-    ];
-
-    const doughnutData = {
-        labels: ['Hội thảo', 'Workshop', 'Cuộc thi', 'Khác'],
-        datasets: [{
-            data: [40, 30, 20, 10],
-            backgroundColor: ['#1677ff', '#faad14', '#ff4d4f', '#52c41a'],
-            borderWidth: 0,
-        }],
-    };
+    
+    const [stats, setStats] = useState({ totalUsers: 0, totalEvents: 0, totalRegistrations: 0 });
+    const [barData, setBarData] = useState(null);
+    const [doughnutData, setDoughnutData] = useState(null);
+    const [activities, setActivities] = useState([]);
+    const [ongoingEvents, setOngoingEvents] = useState([]); // State mới cho sự kiện đang diễn ra
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const currentYear = new Date().getFullYear();
 
-                // === GỌI API VỚI THAM SỐ ĐẦY ĐỦ ===
-                const [statsRes, chartRes] = await Promise.all([
+                // Gọi song song 5 API (Thêm getPublicEvents)
+                const [statsRes, topEventsRes, categoryRes, activitiesRes, allEventsRes] = await Promise.all([
                     getDashboardStats(),
-                    getTopEventStats(currentYear, 0) // year: nay, month: 0 (cả năm)
+                    getTopEventStats(currentYear, 0),
+                    getTopCategoryStats(),
+                    getRecentActivities(),
+                    getPublicEvents() // Lấy danh sách sự kiện để lọc
                 ]);
 
                 setStats(statsRes);
-                
-                // Xử lý dữ liệu biểu đồ
-                // Kiểm tra kỹ cả trường hợp chartRes là mảng hoặc object
-                const dataObj = chartRes || {};
-                
-                if (dataObj && Object.keys(dataObj).length > 0) {
-                    setChartData({
-                        labels: Object.keys(dataObj),
+                setActivities(activitiesRes);
+
+                // 1. Xử lý Biểu đồ Cột
+                if (topEventsRes && Object.keys(topEventsRes).length > 0) {
+                    setBarData({
+                        labels: Object.keys(topEventsRes),
                         datasets: [{
                             label: 'Lượt đăng ký',
-                            data: Object.values(dataObj),
-                            backgroundColor: '#1677ff',
-                            borderRadius: 4,
-                            barThickness: 40,
+                            data: Object.values(topEventsRes),
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6,
+                            barThickness: 30,
                         }],
                     });
                 }
-            } catch (err) { 
+
+                // 2. Xử lý Biểu đồ Tròn
+                if (categoryRes && Object.keys(categoryRes).length > 0) {
+                    setDoughnutData({
+                        labels: Object.keys(categoryRes),
+                        datasets: [{
+                            data: Object.values(categoryRes),
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            borderWidth: 0,
+                        }],
+                    });
+                }
+
+                // 3. Xử lý Sự kiện Đang diễn ra
+                const now = new Date();
+                const activeEvents = allEventsRes.filter(e => 
+                    new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now
+                ).slice(0, 3); // Lấy tối đa 5 cái
+                setOngoingEvents(activeEvents);
+
+            } catch (err) {
                 console.error(err);
-                message.error("Lỗi tải Dashboard"); 
-            } finally { 
-                setLoading(false); 
+                message.error("Không thể tải đầy đủ dữ liệu Dashboard");
+            } finally {
+                setLoading(false);
             }
         };
         fetchData();
     }, []);
 
-    if (loading) return <div style={{ textAlign: 'center', marginTop: 50 }}><Spin size="large" /></div>;
+    if (loading) return <div style={{ textAlign: 'center', marginTop: '20%', height: '100vh' }}><Spin size="large" /></div>;
 
-    const StatCard = ({ title, value, icon, percent }) => (
-        <Card bordered={false} style={{ height: '100%', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+    // Config biểu đồ
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { 
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { borderDash: [2, 4] } },
+            x: { grid: { display: false } }
+        }
+    };
+
+    const StatCard = ({ title, value, icon, color }) => (
+        <Card bordered={false} style={{ height: '100%', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
             <Statistic 
-                title={<span style={{ color: '#8c8c8c', fontSize: 14 }}>{title}</span>}
+                title={<span style={{ color: '#64748b', fontSize: 14, fontWeight: 500 }}>{title}</span>}
                 value={value}
-                valueStyle={{ color: '#000', fontWeight: 'bold', fontSize: 24 }}
-                prefix={icon}
-                suffix={
-                    percent !== undefined && (
-                        <span style={{ fontSize: 12, color: percent > 0 ? '#52c41a' : '#ff4d4f', marginLeft: 10 }}>
-                            {percent > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {Math.abs(percent)}%
-                        </span>
-                    )
+                valueStyle={{ color: '#1e293b', fontWeight: '700', fontSize: 28, marginTop: 4 }}
+                prefix={
+                    <div style={{ background: color, color: '#fff', width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                        {icon}
+                    </div>
                 }
             />
         </Card>
@@ -94,85 +129,118 @@ const DashboardHome = () => {
 
     return (
         <div>
-            <h1 style={{ marginBottom: 5, fontSize: 32, fontWeight: 600 }}>Tổng quan hệ thống</h1>
-            <p style={{ color: '#8c8c8c', marginBottom: 24 }}>Chào mừng trở lại, Admin!</p>
+            <h2 style={{ marginBottom: 5, fontSize: 24, fontWeight: 700, color: '#1e293b' }}>Tổng quan Dashboard</h2>
+            <p style={{ color: '#64748b', marginBottom: 24 }}>Chào mừng quản trị viên quay trở lại.</p>
 
+            {/* HÀNG 1: THỐNG KÊ */}
             <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                <Col xs={24} sm={12} lg={6}>
-                    <StatCard title="Tổng người dùng" value={stats.totalUsers} icon={<UserOutlined style={{ color: '#1677ff', background: '#e6f7ff', padding: 8, borderRadius: '50%' }} />} percent={12.5} />
+                <Col xs={24} sm={12} lg={8}>
+                    <StatCard title="Tổng Người dùng" value={stats.totalUsers} icon={<UserOutlined style={{fontSize: 20}}/>} color="#3b82f6" />
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <StatCard title="Tổng sự kiện" value={stats.totalEvents} icon={<CalendarOutlined style={{ color: '#faad14', background: '#fff7e6', padding: 8, borderRadius: '50%' }} />} percent={5.2} />
+                <Col xs={24} sm={12} lg={8}>
+                    <StatCard title="Tổng Sự kiện" value={stats.totalEvents} icon={<CalendarOutlined style={{fontSize: 20}}/>} color="#f59e0b" />
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <StatCard title="Lượt đăng ký" value={stats.totalRegistrations} icon={<CheckCircleOutlined style={{ color: '#52c41a', background: '#f6ffed', padding: 8, borderRadius: '50%' }} />} percent={-2.1} />
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <StatCard title="Sự kiện đang mở" value={12} icon={<BellOutlined style={{ color: '#ff4d4f', background: '#fff1f0', padding: 8, borderRadius: '50%' }} />} percent={0} />
+                <Col xs={24} sm={12} lg={8}>
+                    <StatCard title="Lượt đăng ký" value={stats.totalRegistrations} icon={<CheckCircleOutlined style={{fontSize: 20}}/>} color="#10b981" />
                 </Col>
             </Row>
 
             <Row gutter={[16, 16]}>
+                {/* === CỘT TRÁI (LỚN): Biểu đồ & Hoạt động gần đây === */}
                 <Col xs={24} lg={16}>
-                    <Card title="Top Sự kiện Hot nhất (Năm nay)" bordered={false} style={{ borderRadius: 8, marginBottom: 16 }}>
+                    {/* 1. Biểu đồ Top Sự kiện */}
+                    <Card title={<span><BarChartOutlined style={{color: '#0cdd17ff', marginRight: 8}}/> Sự kiện hàng đầu trong năm</span>} bordered={false} style={{ borderRadius: 12, marginBottom: 16 }}>
                         <div style={{ height: 300 }}>
-                            {chartData ? (
-                                <Bar 
-                                    data={chartData} 
-                                    options={{ 
-                                        maintainAspectRatio: false, 
-                                        plugins: { legend: { display: false } },
-                                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                                    }} 
-                                />
-                            ) : (
-                                <div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center', color: '#999'}}>
-                                    Chưa có dữ liệu đăng ký nào
+                            {barData ? <Bar data={barData} options={chartOptions} /> : 
+                            <div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center', color: '#999'}}>Chưa có dữ liệu</div>}
+                        </div>
+                    </Card>
+
+                    {/* 2. Hoạt động gần đây (Đã chuyển xuống đây) */}
+                    <Card title={<span><HistoryOutlined style={{color: '#efa544ff', marginRight: 8}}/> Hoạt động gần đây</span>} bordered={false} style={{ borderRadius: 12 }}>
+        
+                    {/* 1. Tạo div bao ngoài để set chiều cao cố định */}
+                    <div style={{ 
+                        height: '200px', // Chiều cao cố định (bạn có thể chỉnh số này)
+                        overflowY: 'auto', // Nếu nội dung dài hơn, hiện thanh cuộn dọc
+                        overflowX: 'hidden' // Ẩn thanh cuộn ngang
+                    }}>
+                        <List
+                            itemLayout="horizontal"
+                            dataSource={activities}
+                            // Bạn có thể bỏ pagination nếu muốn người dùng cuộn chuột thay vì bấm trang
+                            // pagination={{ pageSize: 5, ... }} 
+                            renderItem={item => (
+                                <List.Item style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                    <List.Item.Meta
+                                        avatar={
+                                            <Avatar 
+                                                icon={item.type === 'register' ? <FormOutlined /> : item.type === 'create_event' ? <CalendarOutlined /> : <UserOutlined />} 
+                                                style={{ 
+                                                    backgroundColor: item.type === 'register' ? '#e0f2fe' : item.type === 'create_event' ? '#fef3c7' : '#dcfce7',
+                                                    color: item.type === 'register' ? '#0284c7' : item.type === 'create_event' ? '#d97706' : '#16a34a'
+                                                }} 
+                                            />
+                                        }
+                                        title={<span style={{ fontSize: 13, fontWeight: 500 }}>{item.title}</span>}
+                                        description={<span style={{ fontSize: 11, color: '#94a3b8' }}>{moment(item.time).fromNow()}</span>}
+                                    />
+                                </List.Item>
+                            )}
+                        />
+                        {activities.length === 0 && <div style={{color: '#999', textAlign: 'center', padding: 20}}>Chưa có hoạt động nào</div>}
+                    </div>
+                </Card>
+                </Col>
+
+                {/* === CỘT PHẢI (NHỎ): Biểu đồ tròn & Sự kiện đang diễn ra === */}
+                <Col xs={24} lg={8}>
+                    {/* 1. Biểu đồ Tròn */}
+                    <Card title={<span><PieChartOutlined style={{color: '#ef44efff', marginRight: 8}}/> Tỷ lệ theo chủ đề</span>} bordered={false} style={{ borderRadius: 12, marginBottom: 16 }}>
+                        <div style={{ height: 200, display: 'flex', justifyContent: 'center' }}>
+                            {doughnutData ? <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } } }} /> : 
+                            <div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center', color: '#999'}}>Chưa có dữ liệu</div>}
+                        </div>
+                    </Card>
+
+                    {/* 2. Sự kiện đang diễn ra (MỚI) */}
+                    <Card 
+                        title={<span><BellOutlined style={{color: '#ef4444', marginRight: 8}}/> Sự kiện đang diễn ra</span>} 
+                        bordered={false} 
+                        style={{ borderRadius: 12 }}
+                    >
+                        {/* === TẠO DIV BAO NGOÀI ĐỂ CỐ ĐỊNH CHIỀU CAO === */}
+                        <div style={{ 
+                            height: '300px', // Chiều cao cố định (bạn có thể chỉnh 250px, 400px tùy ý)
+                            overflowY: 'auto', // Hiện thanh cuộn dọc nếu danh sách dài
+                            overflowX: 'hidden' 
+                        }}>
+                            <List
+                                itemLayout="vertical"
+                                dataSource={ongoingEvents}
+                                renderItem={item => (
+                                    <List.Item style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'start'}}>
+                                            <div>
+                                                <Link to={`/events/${item.id}`} style={{fontWeight: 600, color: '#1e293b', display: 'block', marginBottom: 4}}>
+                                                    {item.tieuDe}
+                                                </Link>
+                                                <div style={{fontSize: 12, color: '#64748b'}}>
+                                                    <EnvironmentOutlined /> {item.diaDiem}
+                                                </div>
+                                            </div>
+                                            <Tag color="processing">Đang mở</Tag>
+                                        </div>
+                                    </List.Item>
+                                )}
+                            />
+                            {ongoingEvents.length === 0 && (
+                                <div style={{ textAlign: 'center', padding: '20px 0', color: '#94a3b8' }}>
+                                    Không có sự kiện nào
                                 </div>
                             )}
                         </div>
-                    </Card>
-                    {/* Bảng sự kiện sắp diễn ra (Giả lập) */}
-                    <Card title="Các sự kiện sắp diễn ra" bordered={false} style={{ borderRadius: 8 }}>
-                         <List
-                            itemLayout="horizontal"
-                            dataSource={[
-                                { title: 'Workshop AI & Machine Learning', date: '30/07/2024', count: '45/50' },
-                                { title: 'Cuộc thi Code Challenge 2024', date: '15/08/2024', count: '112/200' },
-                                { title: 'Talkshow: Khởi nghiệp ngành IT', date: '25/08/2024', count: '88/100' },
-                            ]}
-                            renderItem={item => (
-                                <List.Item>
-                                    <List.Item.Meta
-                                        title={<a href="#">{item.title}</a>}
-                                        description={`Ngày tổ chức: ${item.date}`}
-                                    />
-                                    <div><Tag color="blue">{item.count} đăng ký</Tag></div>
-                                </List.Item>
-                            )}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} lg={8}>
-                    <Card title="Tỷ lệ các loại sự kiện (Demo)" bordered={false} style={{ borderRadius: 8, marginBottom: 16 }}>
-                        <div style={{ height: 200, display: 'flex', justifyContent: 'center' }}>
-                            <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }} />
-                        </div>
-                    </Card>
-                    <Card title="Hoạt động gần đây (Demo)" bordered={false} style={{ borderRadius: 8 }}>
-                        <List
-                            itemLayout="horizontal"
-                            dataSource={recentActivities}
-                            renderItem={item => (
-                                <List.Item>
-                                    <List.Item.Meta
-                                        avatar={<Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />}
-                                        title={<span style={{ fontSize: 13 }}>{item.title}</span>}
-                                        description={<span style={{ fontSize: 12 }}>{item.time}</span>}
-                                    />
-                                </List.Item>
-                            )}
-                        />
+                        {/* === KẾT THÚC DIV === */}
                     </Card>
                 </Col>
             </Row>

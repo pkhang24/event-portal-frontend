@@ -1,4 +1,4 @@
-import { Table, Button, Space, Popconfirm, Modal, Form, Input } from 'antd';
+import { Table, Button, Space, Popconfirm, Modal, Form, Input, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, UndoOutlined, DeleteFilled } from '@ant-design/icons';
 import { useState } from 'react';
 
@@ -22,6 +22,9 @@ const CategoryManagementTab = ({ categories, loading, viewMode = 'list', onSave,
     const listColumns = [
         { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
         { title: 'Tên Danh mục', dataIndex: 'tenDanhMuc', key: 'tenDanhMuc' },
+        { title: 'Số lượng Sự kiện', dataIndex: 'soLuongSuKien', key: 'soLuongSuKien', align: 'center',
+            render: (count) => <Tag color="blue">{count}</Tag>
+        },
         {
             title: 'Hành động', key: 'action', render: (_, record) => (
                 <Space size="large">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Layout, Typography, Button, Spin, Alert, message, Card, Row, Col, Avatar, Breadcrumb, Divider, Space } from 'antd';
+import { Layout, Typography, Button, Spin, Alert, message, Card, Row, Col, Avatar, Breadcrumb, Divider, Space, Tag } from 'antd';
 import { 
     CalendarOutlined, 
     EnvironmentOutlined, 
@@ -158,14 +158,33 @@ const EventDetailPage = () => {
                                     </div>
 
                                     {/* Số người */}
-                                    <div style={{ display: 'flex', gap: 15 }}>
-                                        <div style={{ background: '#fff7e6', padding: '8px', borderRadius: '8px', height: 'fit-content' }}>
+                                    <div style={{ display: 'flex', gap: 16 }}>
+                                        <div style={{ width: 40, height: 40, background: '#fff7e6', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                             <TeamOutlined style={{ fontSize: '20px', color: '#fa8c16' }} />
                                         </div>
-                                        <div>
-                                            <div style={{ fontSize: '13px', color: '#777' }}>Số người tham gia</div>
-                                            <div style={{ fontWeight: 500 }}>
-                                                {event.soLuongGioiHan ? `${event.soLuongGioiHan} người tối đa` : 'Không giới hạn'}
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ color: '#777', fontSize: '13px', marginBottom: 4 }}>Số người tham gia</div>
+                                            <div style={{ color: '#fff', fontWeight: 500 }}>
+                                                {event.soLuongGioiHan ? (
+                                                    <>
+                                                        {/* Hiển thị: Đã đăng ký / Tổng số */}
+                                                        <span style={{ fontSize: '16px', fontWeight: 'bold' }}>{event.soNguoiDaDangKy ?? 0}</span> 
+                                                        <span style={{ color: '#000000ff' }}> / {event.soLuongGioiHan} người</span>
+                                                        
+                                                        {/* Thanh tiến trình (Progress Bar) giả lập cho đẹp */}
+                                                        <div style={{ width: '80%', height: 6, background: '#cacacaff', borderRadius: 3, marginTop: 8, overflow: 'hidden' }}>
+                                                            <div style={{ 
+                                                                width: `${Math.min(((event.soNguoiDaDangKy || 0) / event.soLuongGioiHan) * 100, 100)}%`, 
+                                                                height: '100%', 
+                                                                background: '#fa8c16', // Màu cam
+                                                                borderRadius: 3,
+                                                                transition: 'width 0.5s ease'
+                                                            }}></div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <Tag color="green">Không giới hạn</Tag>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

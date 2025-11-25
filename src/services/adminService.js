@@ -6,6 +6,12 @@ export const getDashboardStats = async () => {
     return response.data;
 };
 
+// Lấy danh sách hoạt động gần đây
+export const getRecentActivities = async () => {
+    const response = await api.get('/admin/dashboard/activities');
+    return response.data;
+};
+
 // Lấy danh sách tất cả User
 export const getAllUsers = async () => {
     const response = await api.get('/admin/users');
@@ -35,6 +41,10 @@ export const softDeleteUser = (userId) => {
     // API này chúng ta đã tạo ở Backend (Step 1.1)
     // Nó dùng annotation @SQLDelete nên chỉ cần gọi DELETE là tự động soft-delete
     return api.delete(`/admin/users/${userId}`); 
+};
+
+export const toggleUserLock = async (userId) => {
+    await api.put(`/admin/users/${userId}/lock`);
 };
 
 // Duyệt sự kiện
