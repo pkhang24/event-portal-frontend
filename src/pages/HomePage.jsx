@@ -5,7 +5,7 @@ import { getActiveBanners } from '../services/api';
 import { useBanner } from '../context/BannerContext';
 import MyNavbar from '../components/MyNavbar';
 import MyFooter from '../components/MyFooter';
-import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Select, Segmented, Tag } from 'antd';
+import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Select, Segmented, Tag, Empty } from 'antd';
 // Thêm các Icon mới cho tiêu đề
 import { CalendarOutlined, BarsOutlined, EnvironmentOutlined, FireFilled, CalendarFilled, FlagFilled } from '@ant-design/icons';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
@@ -113,55 +113,68 @@ export const CardComponent = ({ event }) => {
     );
 };
 
-// --- Component con: Danh sách sự kiện (SỬA LẠI TIÊU ĐỀ) ---
+// --- Component con: Danh sách sự kiện (ĐÃ CẢI TIẾN UX) ---
 const EventListView = ({ events }) => {
     const now = new Date();
+    
+    // Phân loại sự kiện
     const ongoingEvents = events.filter(e => new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now);
     const upcomingEvents = events.filter(e => new Date(e.thoiGianBatDau) > now);
     const endedEvents = events.filter(e => new Date(e.thoiGianKetThuc) < now);
 
-    if (events.length === 0) return <Alert message="Không tìm thấy sự kiện nào." type="info" showIcon />;
+    // Component hiển thị khi trống (Tái sử dụng)
+    const EmptySection = () => (
+        <div style={{ 
+            background: '#fff', padding: '40px', borderRadius: '12px', 
+            textAlign: 'center', border: '1px dashed #d9d9d9',
+            color: '#8c8c8c'
+        }}>
+            <Empty 
+                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                description="Hiện tại chưa có sự kiện nào, hãy quay lại sau nhé!" 
+            />
+        </div>
+    );
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '50px' }}>
+            
             {/* 1. Đang diễn ra */}
-            {ongoingEvents.length > 0 && (
-                <section>
-                    {/* Dùng SectionTitle mới */}
-                    <SectionTitle title="Sự kiện đang diễn ra" icon={<FireFilled />} color="#ff4d4f" />
+            <section>
+                <SectionTitle title="Sự kiện đang diễn ra" icon={<FireFilled />} color="#ff4d4f" />
+                {ongoingEvents.length > 0 ? (
                     <Row gutter={[24, 24]}>
                         {ongoingEvents.map(event => (
                             <Col xs={24} sm={12} md={8} lg={6} key={event.id}><CardComponent event={event} /></Col>
                         ))}
                     </Row>
-                </section>
-            )}
+                ) : <EmptySection />}
+            </section>
 
             {/* 2. Sắp diễn ra */}
-            {upcomingEvents.length > 0 && (
-                <section>
-                    {/* Dùng SectionTitle mới */}
-                    <SectionTitle title="Sự kiện sắp diễn ra" icon={<CalendarFilled />} color="#1677ff" />
+            <section>
+                <SectionTitle title="Sự kiện sắp diễn ra" icon={<CalendarFilled />} color="#1677ff" />
+                {upcomingEvents.length > 0 ? (
                     <Row gutter={[24, 24]}>
                         {upcomingEvents.map(event => (
                             <Col xs={24} sm={12} md={8} lg={6} key={event.id}><CardComponent event={event} /></Col>
                         ))}
                     </Row>
-                </section>
-            )}
+                ) : <EmptySection />}
+            </section>
 
             {/* 3. Đã kết thúc */}
-            {endedEvents.length > 0 && (
-                <section>
-                    {/* Dùng SectionTitle mới */}
-                    <SectionTitle title="Sự kiện đã kết thúc" icon={<FlagFilled />} color="#8c8c8c" />
+            <section>
+                <SectionTitle title="Sự kiện đã kết thúc" icon={<FlagFilled />} color="#8c8c8c" />
+                {endedEvents.length > 0 ? (
                     <Row gutter={[24, 24]}>
                         {endedEvents.map(event => (
                             <Col xs={24} sm={12} md={8} lg={6} key={event.id}><CardComponent event={event} /></Col>
                         ))}
                     </Row>
-                </section>
-            )}
+                ) : <EmptySection />}
+            </section>
+
         </div>
     );
 };

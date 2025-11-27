@@ -39,24 +39,36 @@ const DashboardHome = () => {
     const [activities, setActivities] = useState([]);
     const [ongoingEvents, setOngoingEvents] = useState([]); // State mới cho sự kiện đang diễn ra
 
+    // --- 1. Tải Thống kê Tổng quan (Rất quan trọng, ít lỗi) ---
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchStats = async () => {
+            try {
+                const statsRes = await getDashboardStats();
+                setStats(statsRes);
+            } catch (err) {
+                console.error("Lỗi tải Stats:", err);
+                // Không hiện message lỗi để tránh spam nếu mạng chập chờn
+            } finally {
+                // Chỉ tắt loading khi phần quan trọng nhất (Stats) đã xong
+                setLoading(false); 
+            }
+        };
+        fetchStats();
+    }, []);
+
+    // --- 2. Tải Biểu đồ (Cột & Tròn) ---
+    useEffect(() => {
+        const fetchCharts = async () => {
             try {
                 const currentYear = new Date().getFullYear();
-
-                // Gọi song song 5 API (Thêm getPublicEvents)
-                const [statsRes, topEventsRes, categoryRes, activitiesRes, allEventsRes] = await Promise.all([
-                    getDashboardStats(),
+                
+                // Gọi song song 2 API biểu đồ (Nếu 1 cái lỗi thì cả 2 biểu đồ sẽ không hiện, nhưng Stats vẫn hiện)
+                const [topEventsRes, categoryRes] = await Promise.all([
                     getTopEventStats(currentYear, 0),
-                    getTopCategoryStats(),
-                    getRecentActivities(),
-                    getPublicEvents() // Lấy danh sách sự kiện để lọc
+                    getTopCategoryStats()
                 ]);
 
-                setStats(statsRes);
-                setActivities(activitiesRes);
-
-                // 1. Xử lý Biểu đồ Cột
+                // Xử lý Biểu đồ Cột
                 if (topEventsRes && Object.keys(topEventsRes).length > 0) {
                     setBarData({
                         labels: Object.keys(topEventsRes),
@@ -70,7 +82,7 @@ const DashboardHome = () => {
                     });
                 }
 
-                // 2. Xử lý Biểu đồ Tròn
+                // Xử lý Biểu đồ Tròn
                 if (categoryRes && Object.keys(categoryRes).length > 0) {
                     setDoughnutData({
                         labels: Object.keys(categoryRes),
@@ -81,22 +93,43 @@ const DashboardHome = () => {
                         }],
                     });
                 }
-
-                // 3. Xử lý Sự kiện Đang diễn ra
-                const now = new Date();
-                const activeEvents = allEventsRes.filter(e => 
-                    new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now
-                ).slice(0, 3); // Lấy tối đa 5 cái
-                setOngoingEvents(activeEvents);
-
             } catch (err) {
-                console.error(err);
-                message.error("Không thể tải đầy đủ dữ liệu Dashboard");
-            } finally {
-                setLoading(false);
+                console.error("Lỗi tải Biểu đồ:", err);
             }
         };
-        fetchData();
+        fetchCharts();
+    }, []);
+
+    // --- 3. Tải Hoạt động gần đây (DỄ LỖI NHẤT KHI XÓA USER) ---
+    useEffect(() => {
+        const fetchActivities = async () => {
+            try {
+                const activitiesRes = await getRecentActivities();
+                setActivities(activitiesRes);
+            } catch (err) {
+                console.error("Lỗi tải Hoạt động:", err);
+                // Nếu lỗi, danh sách hoạt động sẽ trống, nhưng KHÔNG LÀM SẬP TRANG
+            }
+        };
+        fetchActivities();
+    }, []);
+
+    // --- 4. Tải Sự kiện đang diễn ra ---
+    useEffect(() => {
+        const fetchOngoing = async () => {
+            try {
+                const allEventsRes = await getPublicEvents();
+                const now = new Date();
+                // Lấy tất cả sự kiện đang diễn ra
+                const activeEvents = allEventsRes.filter(e => 
+                    new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now
+                );
+                setOngoingEvents(activeEvents);
+            } catch (err) {
+                console.error("Lỗi tải Sự kiện đang diễn ra:", err);
+            }
+        };
+        fetchOngoing();
     }, []);
 
     if (loading) return <div style={{ textAlign: 'center', marginTop: '20%', height: '100vh' }}><Spin size="large" /></div>;
