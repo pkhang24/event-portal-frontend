@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getPublicEvents, getCategories } from '../services/eventService';
-import { getActiveBanners } from '../services/api';
+// import { getActiveBanners } from '../services/api';
 import { useBanner } from '../context/BannerContext';
 import MyNavbar from '../components/MyNavbar';
 import MyFooter from '../components/MyFooter';
@@ -183,7 +183,7 @@ const HomePage = () => {
     const [sourceEvents, setSourceEvents] = useState([]); 
     const [displayedEvents, setDisplayedEvents] = useState([]); 
     const [categories, setCategories] = useState([]);
-    const { banners, loading: bannerLoading } = useBanner();
+    const {banners} = useBanner();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
@@ -219,22 +219,58 @@ const HomePage = () => {
         }
     }, [filterCategory, sourceEvents]); 
 
+    useEffect(() => {
+        if (banners.length > 0) {
+            const timer = setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100); // Đợi 100ms để DOM ổn định
+            return () => clearTimeout(timer);
+        }
+    }, [banners]);
+
     return (
         <Layout className="layout" style={{ minHeight: '100vh', background: '#ffffffff' }}>
             <MyNavbar />
 
             {/* === PHẦN BANNER (GIỮ NGUYÊN CODE CŨ) === */}
-            {!loading && !error && banners.length > 0 && (
-                <div style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 24px' }}>
-                    <Carousel autoplay draggable={true} className="home-banner-carousel" style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+            {banners && banners.length > 0 ? (
+                <div style={{ 
+                    maxWidth: '1200px', 
+                    margin: '30px auto', 
+                    padding: '0 24px',
+                    height: '400px' // Chiều cao cứng cho khung chứa
+                }}>
+                    <Carousel 
+                        autoplay 
+                        draggable={true}
+                        className="home-banner-carousel" // Class này ăn CSS ở Bước 1
+                        style={{ 
+                            height: '100%',
+                            borderRadius: '16px',
+                            overflow: 'hidden',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.15)'
+                        }}
+                    >
                         {banners.map((banner) => (
-                            <div key={banner.id}>
-                                <img src={banner.imageUrl} alt="Event Banner" style={{ width: '100%', height: '350px', objectFit: 'cover' }} />
+                            <div key={banner.id} className="home-banner-item">
+                                <img 
+                                    src={banner.imageUrl} 
+                                    alt="Event Banner" 
+                                    className="home-banner-img"
+                                    // Xử lý ảnh lỗi
+                                    onError={(e) => {
+                                        e.target.onerror = null; 
+                                        e.target.src = "https://placehold.co/1200x400/1e293b/ffffff?text=Banner+Error";
+                                    }}
+                                />
+                                {/* (Phần Hero Overlay nếu bạn có dùng) */}
                             </div>
                         ))}
                     </Carousel>
                 </div>
-            )}
+            ) : null}
+
+            
 
             <Content style={{ padding: '0 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>

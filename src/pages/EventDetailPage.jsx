@@ -50,8 +50,7 @@ const EventDetailPage = () => {
         setRegistering(true);
         try {
             await api.post('/registrations', { eventId: id });
-            message.success("Đăng ký thành công! Vui lòng kiểm tra vé của bạn.");
-            // Reload lại trang để cập nhật trạng thái nút (hoặc gọi lại API getEventDetail)
+            message.success("Đăng ký thành công!");
             const updatedEvent = await getEventDetail(id);
             setEvent(updatedEvent);
         } catch (err) {
@@ -65,147 +64,215 @@ const EventDetailPage = () => {
     if (error) return <Layout><MyNavbar /><Content style={{ padding: '50px' }}><Alert message={error} type="error" showIcon /></Content></Layout>;
     if (!event) return null;
 
+    const fallbackImage = "https://placehold.co/1200x400/1677ff/ffffff?text=Event+Banner";
+
     return (
-        <Layout className="layout" style={{ minHeight: '100vh', background: '#f5f7fa' }}> {/* Nền xám nhẹ hiện đại */}
+        <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}> 
             <MyNavbar />
             
-            <Content style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px', width: '100%' }}>
-                {/* Breadcrumb (Đường dẫn) */}
-                <Breadcrumb style={{ marginBottom: 20 }}>
-                    <Breadcrumb.Item><Link to="/">Trang chủ</Link></Breadcrumb.Item>
-                    <Breadcrumb.Item>{event.tieuDe}</Breadcrumb.Item>
-                </Breadcrumb>
+            <Content style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px', width: '100%' }}>
+                
+                {/* Breadcrumb */}
+                <div style={{ marginBottom: 20, color: '#94a3b8' }}>
+                    <span style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => navigate('/')}>Trang chủ</span>
+                    <span style={{ margin: '0 8px' }}>/</span>
+                    <span style={{ cursor: 'pointer', color: '#94a3b8' }}>Sự kiện</span>
+                    <span style={{ margin: '0 8px' }}>/</span>
+                    <span style={{ color: '#26292cff' }}>{event.tieuDe}</span>
+                </div>
 
-                {/* 1. BANNER LỚN Ở TRÊN CÙNG */}
-                <div style={{ marginBottom: 30, borderRadius: '16px', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}>
+                {/* BANNER */}
+                <div style={{ 
+                    width: '100%', 
+                    height: '350px', 
+                    borderRadius: '16px', 
+                    overflow: 'hidden', 
+                    marginBottom: '40px',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+                }}>
                      <img
                         alt={event.tieuDe}
-                        src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
-                        style={{ width: '100%', height: '400px', objectFit: 'cover', display: 'block' }}
+                        src={event.anhThumbnail || fallbackImage}
+                        onError={(e) => { e.target.src = fallbackImage; }} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                 </div>
 
-                <Row gutter={[40, 24]}>
-                    {/* === CỘT TRÁI: NỘI DUNG CHÍNH === */}
-                    <Col xs={24} md={16}>
-                        {/* Tiêu đề & Mô tả ngắn */}
-                        <div style={{ marginBottom: 30 }}>
-                            <Title level={1} style={{ fontSize: '32px', marginBottom: 10 }}>{event.tieuDe}</Title>
-                            <Text type="secondary" style={{ fontSize: '16px' }}>{event.moTaNgan}</Text>
-                        </div>
+                <Row gutter={[48, 24]}> 
+                    
+                    {/* === CỘT TRÁI: NỘI DUNG CHÍNH (ĐÃ BỌC TRONG CARD) === */}
+                    <Col xs={24} lg={16}>
+                        <Card 
+                            bordered={false}
+                            style={{ 
+                                background: '#ffffffff', 
+                                borderRadius: '16px', 
+                                // border: '1px solid #334155' 
+                            }}
+                            bodyStyle={{ padding: '32px' }} // Tăng padding bên trong cho thoáng
+                        >
+                            <Typography>
+                                <Title level={1} style={{ color: '#334155', fontSize: '32px', marginTop: 0, marginBottom: 16 }}>
+                                    {event.tieuDe}
+                                </Title>
+                                
+                                {/* Mô tả ngắn */}
+                                <Paragraph style={{ color: '#334155', fontSize: '18px', lineHeight: '1.7', marginBottom: 40 }}>
+                                    {event.moTaNgan}
+                                </Paragraph>
 
-                        {/* Mô tả chi tiết */}
-                        <div style={{ marginBottom: 40 }}>
-                            <Title level={4}>Mô tả chi tiết</Title>
-                            <div 
-                                dangerouslySetInnerHTML={{ __html: event.noiDung }} 
-                                style={{ fontSize: '16px', lineHeight: '1.8', color: '#333' }} 
-                            />
-                        </div>
+                                <Divider style={{ borderColor: '#334155' }} />
+
+                                {/* Nội dung chi tiết */}
+                                <div style={{ marginBottom: 40 }}>
+                                    <Title level={4} style={{ color: '#334155', marginBottom: 16 }}>Mô tả chi tiết</Title>
+                                    
+                                    {/* === FIX LỖI TRÀN CHỮ === */}
+                                    <div 
+                                        className="event-content-dark"
+                                        style={{ 
+                                            color: '#334155', 
+                                            fontSize: '16px', 
+                                            lineHeight: '1.8',
+                                            // Các thuộc tính CSS quan trọng để chống tràn:
+                                            overflowWrap: 'break-word', 
+                                            wordWrap: 'break-word',
+                                            wordBreak: 'break-word',
+                                            maxWidth: '100%'
+                                        }}
+                                        dangerouslySetInnerHTML={{ __html: event.noiDung }} 
+                                    />
+                                </div>
+
+                                {/* <Divider style={{ borderColor: '#334155' }} /> */}
+
+                                {/* Phần Diễn giả */}
+                                {/* <div style={{ marginBottom: 10 }}>
+                                    <Title level={4} style={{ color: '#fff', marginBottom: 20 }}>Diễn giả</Title>
+                                    <Row gutter={[16, 16]}>
+                                        <Col xs={24} sm={12}>
+                                            <div style={{ background: '#0f172a', padding: '16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid #334155' }}>
+                                                <Avatar size={56} icon={<UserOutlined />} src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" />
+                                                <div>
+                                                    <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '16px' }}>TS. Lê Minh Quân</div>
+                                                    <div style={{ color: '#94a3b8', fontSize: '13px' }}>Trưởng phòng AI, FPT</div>
+                                                </div>
+                                            </div>
+                                        </Col>
+                                        <Col xs={24} sm={12}>
+                                            <div style={{ background: '#0f172a', padding: '16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid #334155' }}>
+                                                <Avatar size={56} icon={<UserOutlined />} src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" />
+                                                <div>
+                                                    <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '16px' }}>ThS. Nguyễn Thuỳ Anh</div>
+                                                    <div style={{ color: '#94a3b8', fontSize: '13px' }}>Giám đốc sản phẩm, Zalo</div>
+                                                </div>
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                </div> */}
+                            </Typography>
+                        </Card>
                     </Col>
 
-                    {/* === CỘT PHẢI: THÔNG TIN ĐĂNG KÝ (STICKY) === */}
-                    <Col xs={24} md={8}>
-                        <div style={{ position: 'sticky', top: 20 }}>
-                            <Card 
-                                bordered={false} 
-                                style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.08)', borderRadius: '12px' }}
-                            >
+                    {/* === CỘT PHẢI: THẺ ĐĂNG KÝ STICKY (Giữ nguyên style cũ) === */}
+                    <Col xs={24} lg={8}>
+                        <div style={{ top: 24 }}>
+                            <div style={{ 
+                                background: '#ffffffff', 
+                                borderRadius: '16px', 
+                                padding: '24px', 
+                                border: '1px solid #ffffffff',
+                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                            }}>
                                 {/* Nút Đăng ký */}
                                 <Button 
                                     type="primary" 
                                     size="large" 
                                     block 
-                                    style={{ height: '50px', fontSize: '16px', fontWeight: '600', marginBottom: 24 }}
+                                    style={{ 
+                                        height: '48px', fontSize: '16px', fontWeight: 'bold', marginBottom: 24,
+                                        background: '#dfdfdfff', borderColor: '#ffffffff'
+                                    }}
                                     onClick={handleRegister}
                                     loading={registering}
                                     disabled={!user || user.role !== 'STUDENT' || event.isRegistered} 
                                 >
                                     {!user ? 'Đăng nhập để tham gia' : 
                                       (user.role !== 'STUDENT' ? 'Dành cho sinh viên' : 
-                                        (event.isRegistered ? 'Đã đăng ký' : 'Đăng ký tham gia ngay')
+                                        (event.isRegistered ? 'Đã đăng ký tham gia' : 'Đăng ký tham gia ngay')
                                       )
                                     }
                                 </Button>
 
-                                <Divider style={{ margin: '12px 0' }} />
+                                <div style={{ height: 1, background: '#334155', margin: '0 0 24px 0' }} />
 
-                                {/* List thông tin */}
-                                <Space direction="vertical" size={20} style={{ width: '100%' }}>
-                                    
-                                    {/* Thời gian */}
-                                    <div style={{ display: 'flex', gap: 15 }}>
-                                        <div style={{ background: '#e6f7ff', padding: '8px', borderRadius: '8px', height: 'fit-content' }}>
-                                            <CalendarOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
+                                <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                                    <div style={{ display: 'flex', gap: 16 }}>
+                                        <div style={{ width: 40, height: 40, background: '#2781ffff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            <CalendarOutlined style={{ fontSize: '20px', color: '#fff' }} />
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '13px', color: '#777' }}>Thời gian</div>
-                                            <div style={{ fontWeight: 500 }}>
-                                                {new Date(event.thoiGianBatDau).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}, {new Date(event.thoiGianBatDau).toLocaleDateString('vi-VN')}
+                                            <div style={{ color: '#334155', fontSize: '13px', marginBottom: 4 }}>Thời gian</div>
+                                            <div style={{ color: '#334155', fontWeight: 500 }}>
+                                                {new Date(event.thoiGianBatDau).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}, <br/>
+                                                {new Date(event.thoiGianBatDau).toLocaleDateString('vi-VN', {weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit'})}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Địa điểm */}
-                                    <div style={{ display: 'flex', gap: 15 }}>
-                                        <div style={{ background: '#f6ffed', padding: '8px', borderRadius: '8px', height: 'fit-content' }}>
-                                            <EnvironmentOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
+                                    <div style={{ display: 'flex', gap: 16 }}>
+                                        <div style={{ width: 40, height: 40, background: '#e68c25ff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            <EnvironmentOutlined style={{ fontSize: '20px', color: '#fff' }} />
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '13px', color: '#777' }}>Địa điểm</div>
-                                            <div style={{ fontWeight: 500 }}>{event.diaDiem}</div>
+                                            <div style={{ color: '#334155', fontSize: '13px', marginBottom: 4 }}>Địa điểm</div>
+                                            <div style={{ color: '#334155', fontWeight: 500 }}>{event.diaDiem}</div>
                                         </div>
                                     </div>
 
-                                    {/* Số người */}
+                                    {/* Số người tham gia (Đã fix ở bước trước) */}
                                     <div style={{ display: 'flex', gap: 16 }}>
-                                        <div style={{ width: 40, height: 40, background: '#fff7e6', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                            <TeamOutlined style={{ fontSize: '20px', color: '#fa8c16' }} />
+                                        <div style={{ width: 40, height: 40, background: '#20eb6eff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            <TeamOutlined style={{ fontSize: '20px', color: '#fff' }} />
                                         </div>
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ color: '#777', fontSize: '13px', marginBottom: 4 }}>Số người tham gia</div>
+                                            <div style={{ color: '#334155', fontSize: '13px', marginBottom: 4 }}>Số người tham gia</div>
                                             <div style={{ color: '#fff', fontWeight: 500 }}>
                                                 {event.soLuongGioiHan ? (
                                                     <>
-                                                        {/* Hiển thị: Đã đăng ký / Tổng số */}
-                                                        <span style={{ fontSize: '16px', fontWeight: 'bold' }}>{event.soNguoiDaDangKy ?? 0}</span> 
-                                                        <span style={{ color: '#000000ff' }}> / {event.soLuongGioiHan} người</span>
-                                                        
-                                                        {/* Thanh tiến trình (Progress Bar) giả lập cho đẹp */}
-                                                        <div style={{ width: '80%', height: 6, background: '#cacacaff', borderRadius: 3, marginTop: 8, overflow: 'hidden' }}>
+                                                        <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>
+                                                            {event.soNguoiDaDangKy ?? 0}
+                                                        </span>
+                                                        <span style={{ color: '#94a3b8' }}> / {event.soLuongGioiHan} người</span>
+                                                        <div style={{ width: '200px', height: 6, background: '#b4b7beff', borderRadius: 3, marginTop: 8, overflow: 'hidden' }}>
                                                             <div style={{ 
                                                                 width: `${Math.min(((event.soNguoiDaDangKy || 0) / event.soLuongGioiHan) * 100, 100)}%`, 
                                                                 height: '100%', 
-                                                                background: '#fa8c16', // Màu cam
-                                                                borderRadius: 3,
-                                                                transition: 'width 0.5s ease'
+                                                                background: '#fa8c16', 
+                                                                borderRadius: 3 
                                                             }}></div>
                                                         </div>
                                                     </>
-                                                ) : (
-                                                    <Tag color="green">Không giới hạn</Tag>
-                                                )}
+                                                ) : <Tag color="green">Không giới hạn</Tag>}
                                             </div>
                                         </div>
                                     </div>
                                 </Space>
 
-                                <Divider style={{ margin: '24px 0' }} />
+                                <div style={{ height: 1, background: '#334155', margin: '24px 0' }} />
 
-                                {/* Chia sẻ */}
                                 <div>
-                                    <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: 10 }}>Chia sẻ sự kiện</div>
-                                    <Space size="large">
-                                        <Button shape="circle" icon={<FacebookFilled style={{ color: '#3b5998' }} />} />
-                                        <Button shape="circle" icon={<GlobalOutlined style={{ color: '#1890ff' }} />} />
-                                        <Button shape="circle" icon={<LinkOutlined />} onClick={() => {
+                                    <div style={{ color: '#334155', fontWeight: 600, marginBottom: 12 }}>Chia sẻ sự kiện</div>
+                                    <Space size={12}>
+                                        <Button shape="circle" icon={<FacebookFilled />} style={{ background: '#005ad8ff', border: 'none', color: '#fff' }} />
+                                        <Button shape="circle" icon={<GlobalOutlined />} style={{ background: '#25bb00ff', border: 'none', color: '#fff' }} />
+                                        <Button shape="circle" icon={<LinkOutlined />} style={{ background: '#5d636dff', border: 'none', color: '#fff' }} onClick={() => {
                                             navigator.clipboard.writeText(window.location.href);
                                             message.success("Đã copy link!");
                                         }} />
                                     </Space>
                                 </div>
-
-                            </Card>
+                            </div>
                         </div>
                     </Col>
                 </Row>

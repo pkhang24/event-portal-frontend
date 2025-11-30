@@ -49,3 +49,88 @@ html, body {
     scrollbar-width: thin;
     scrollbar-color: #c1c1c1 transparent;
 }
+
+/* Styles cho Carousel */
+.home-banner-carousel .slick-slide {
+  text-align: center;
+  height: 400px;
+  line-height: 400px;
+  background: #364d79;
+  overflow: hidden;
+}
+
+.home-banner-carousel .slick-slide img {
+  display: block;
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Khi di chuột vào carousel, hiện con trỏ "nắm tay" */
+.home-banner-carousel {
+    cursor: grab; 
+}
+
+/* Khi đang nhấn giữ chuột để kéo, hiện con trỏ "nắm chặt" */
+.home-banner-carousel:active {
+    cursor: grabbing;
+}
+
+/* === CSS BANNER FIX TOÀN DIỆN === */
+
+/* 1. Ép khung chứa chính của Antd Carousel */
+.ant-carousel .slick-slider {
+    height: '400px' !important;
+    width: '1200px' !important;
+}
+
+.ant-carousel {
+    width: '1200px' !important;
+}
+
+/* 2. Ép các lớp danh sách của Slick */
+.home-banner-carousel .slick-list,
+.home-banner-carousel .slick-track {
+    height: '400px' !important;
+    display: flex !important; /* Quan trọng: giúp căn chỉnh chiều cao */
+}
+
+/* 3. Ép từng slide riêng lẻ */
+.home-banner-carousel .slick-slide {
+    width: '1200px' !important;
+    height: '400px' !important;
+    /* display: flex !important; */
+    align-items: stretch;
+}
+
+/* 4. Ép thẻ div bao bọc ảnh */
+.home-banner-carousel .slick-slide > div {
+    width: '1200px';
+    height: '400px' !important;
+    display: flex !important;
+}
+.home-banner-item {
+     width: '1200px';
+     height: '400px' !important;
+}
+
+/* 5. Ép chính bức ảnh */
+.home-banner-img {
+    display: block !important;
+    width: '1200px' !important;
+    height: '400px' !important;
+    object-fit: cover !important;
+}
+
+/* === 5. HIỆU ỨNG HOVER CHO NAVBAR (Thêm đoạn này) === */
+.nav-hover-effect {
+    transition: all 0.3s ease; 
+}
+
+.nav-hover-effect:hover {
+    /* Dùng !important để ghi đè màu đen mặc định */
+    color: #1677ff !important; 
+    /* background-color: rgba(22, 119, 255, 0.05) !important; */
+    border-radius: 6px;
+}
