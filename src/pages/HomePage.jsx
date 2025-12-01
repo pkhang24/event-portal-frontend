@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getPublicEvents, getCategories } from '../services/eventService';
@@ -5,7 +6,7 @@ import { getPublicEvents, getCategories } from '../services/eventService';
 import { useBanner } from '../context/BannerContext';
 import MyNavbar from '../components/MyNavbar';
 import MyFooter from '../components/MyFooter';
-import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Select, Segmented, Tag, Empty } from 'antd';
+import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Select, Segmented, Tag, Empty, Image} from 'antd';
 // Thêm các Icon mới cho tiêu đề
 import { CalendarOutlined, BarsOutlined, EnvironmentOutlined, FireFilled, CalendarFilled, FlagFilled } from '@ant-design/icons';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
@@ -74,25 +75,79 @@ export const CardComponent = ({ event }) => {
     const now = new Date();
     const startTime = new Date(event.thoiGianBatDau);
     const endTime = new Date(event.thoiGianKetThuc);
+
     const isEnded = endTime < now;
     const isOngoing = startTime <= now && endTime >= now;
+    const isUpcoming = startTime > now;
 
     const handleCardClick = () => {
         navigate(`/events/${event.id}`);
     };
 
+    const renderStatusBadge = () => {
+        if (isEnded) {
+            return (
+                <div style={{
+                    position: 'absolute', top: 10, right: 10,
+                    background: 'rgba(0,0,0,0.7)', color: '#fff',
+                    padding: '4px 8px', borderRadius: 4, fontSize: 12, fontWeight: 'bold'
+                }}>
+                    ĐÃ KẾT THÚC
+                </div>
+            );
+        }
+        if (isOngoing) {
+            return (
+                <div style={{
+                    position: 'absolute', top: 10, right: 10,
+                    background: '#ff4d4f', color: '#fff', // Màu đỏ nổi bật
+                    padding: '4px 8px', borderRadius: 4, fontSize: 12, fontWeight: 'bold',
+                    boxShadow: '0 2px 8px rgba(255, 77, 79, 0.4)'
+                }}>
+                    ĐANG DIỄN RA
+                </div>
+            );
+        }
+        if (isUpcoming) {
+            return (
+                <div style={{
+                    position: 'absolute', top: 10, right: 10,
+                    background: '#1677ff', color: '#fff', // Màu xanh dương
+                    padding: '4px 8px', borderRadius: 4, fontSize: 12, fontWeight: 'bold',
+                    boxShadow: '0 2px 8px rgba(22, 119, 255, 0.4)'
+                }}>
+                    SẮP DIỄN RA
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <Card
             hoverable
+            className="event-card"
             onClick={handleCardClick}
             style={{ 
-                height: '100%', display: 'flex', flexDirection: 'column', cursor: 'pointer',
-                opacity: isEnded ? 0.7 : 1, backgroundColor: isEnded ? '#f5f5f5' : '#fff',
+                height: '100%', 
+                display: 'flex', flexDirection: 'column', cursor: 'pointer',
+                // Làm mờ nhẹ nếu đã kết thúc
+                opacity: isEnded ? 0.7 : 1,
+                background: isEnded ? '#f5f5f5' : '#fff',
+                borderRadius: '12px', overflow: 'hidden', border: 'none',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
             }}
+            bodyStyle={{ padding: '16px' }}
             cover={
-                <div style={{ position: 'relative' }}>
-                    <img alt={event.tieuDe} src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"} style={{ height: 200, width: '100%', objectFit: 'cover', display: 'block' }} />
-                    {isEnded && <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '4px 8px', borderRadius: 4, fontWeight: 'bold', fontSize: '12px' }}>ĐÃ KẾT THÚC</div>}
+                <div style={{ height: '180px', overflow: 'hidden', position: 'relative' }}>
+                    <img 
+                        alt={event.tieuDe} 
+                        src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
+                        className="event-card-img"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s' }}
+                    />
+                    {/* === GỌI HÀM RENDER BADGE === */}
+                    {renderStatusBadge()}
                 </div>
             }
         >
@@ -245,7 +300,7 @@ const HomePage = () => {
                         draggable={true}
                         className="home-banner-carousel" // Class này ăn CSS ở Bước 1
                         style={{ 
-                            height: '100%',
+                            height: '400px',
                             borderRadius: '16px',
                             overflow: 'hidden',
                             boxShadow: '0 10px 30px rgba(0,0,0,0.15)'
@@ -253,17 +308,29 @@ const HomePage = () => {
                     >
                         {banners.map((banner) => (
                             <div key={banner.id} className="home-banner-item">
-                                <img 
-                                    src={banner.imageUrl} 
-                                    alt="Event Banner" 
-                                    className="home-banner-img"
-                                    // Xử lý ảnh lỗi
-                                    onError={(e) => {
-                                        e.target.onerror = null; 
-                                        e.target.src = "https://placehold.co/1200x400/1e293b/ffffff?text=Banner+Error";
-                                    }}
+                                <Image
+                                    src={banner.imageUrl}
+                                    alt="Event Banner"
+                                    preview={false} // Tắt tính năng bấm vào để xem ảnh to
+                                    width="1200px"
+                                    height="400px"
+                                    style={{ objectFit: 'cover' }}
+                                    
+                                    // === KỸ THUẬT TỐI ƯU ===
+                                    // Hiển thị một khung màu hoặc ảnh mờ trong khi đợi ảnh thật tải
+                                    placeholder={
+                                        <div style={{ 
+                                            width: '1200px', 
+                                            height: '400px', 
+                                            background: 'linear-gradient(90deg, #f0f2f5 25%, #e6f7ff 37%, #f0f2f5 63%)', // Hiệu ứng Skeleton loader
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <Spin /> {/* Hoặc hiện icon loading */}
+                                        </div>
+                                    }
                                 />
-                                {/* (Phần Hero Overlay nếu bạn có dùng) */}
                             </div>
                         ))}
                     </Carousel>
@@ -287,7 +354,6 @@ const HomePage = () => {
                     )}
                 </div>
             </Content>
-            
             <MyFooter />
         </Layout>
     );

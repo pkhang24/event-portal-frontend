@@ -7,6 +7,8 @@ import { BannerProvider } from './context/BannerContext';
 // Import các trang Public / Student / Poster
 import MyNavbar from './components/MyNavbar';
 import HomePage from './pages/HomePage';
+import EventsPage from './pages/EventsPage';
+import AboutPage from './pages/AboutPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import SearchPage from './pages/SearchPage';
@@ -16,12 +18,10 @@ import PosterEventsPage from './pages/PosterEventsPage';
 import CheckInPage from './pages/CheckInPage';
 import HistoryPage from './pages/HistoryPage';
 
-// Import các trang Admin (Cấu trúc mới)
+// Import các trang Admin
 import AdminLayout from './components/admin/AdminLayout';
 import DashboardHome from './pages/admin/DashboardHome';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
-// Lưu ý: Bạn cần tạo các file này (copy từ AdminUsersPage và sửa lại)
-// Nếu chưa có, hãy tạm thời comment lại để không bị lỗi
 import AdminEventsPage from './pages/admin/AdminEventsPage'; 
 import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
 import AdminBannersPage from './pages/admin/AdminBannersPage';
@@ -52,34 +52,40 @@ const AppContent = () => {
       <Routes>
         {/* === CÁC ROUTE PUBLIC / STUDENT / POSTER === */}
         <Route path="/" element={<HomePage />} />
+
+        <Route path="/events" element={<EventsPage />} />
+
+        <Route path="/about" element={<AboutPage />} />
+
         <Route path="/login" element={<LoginPage />} />
+
         <Route path="/profile" element={<ProfilePage />} />
+
         <Route path="/search" element={<SearchPage />} />
+
         <Route path="/events/:id" element={<EventDetailPage />} />
+
         <Route path="/my-tickets" element={<MyTicketsPage />} />
+
         <Route path="/manage-events" element={<PosterEventsPage />} />
+
         <Route path="/check-in" element={<CheckInPage />} />
+
         <Route path="/history" element={<HistoryPage />} />
 
-        {/* === CÁC ROUTE ADMIN (MỚI) === */}
-        {/* AdminLayout sẽ bao bọc tất cả các route con bên trong */}
+        {/* === CÁC ROUTE ADMIN === */}
         <Route path="/admin" element={<AdminLayout />}>
-            {/* index: Trang mặc định khi vào /admin (Dashboard) */}
+        
             <Route index element={<DashboardHome />} />
             
-            {/* /admin/users */}
             <Route path="users" element={<AdminUsersPage />} />
-            
-            {/* /admin/events */}
+
             <Route path="events" element={<AdminEventsPage />} />
             
-            {/* /admin/categories */}
             <Route path="categories" element={<AdminCategoriesPage />} />
             
-            {/* /admin/banners */}
             <Route path="banners" element={<AdminBannersPage />} />
 
-            {/* /admin/stats */}
             <Route path="stats" element={<AdminStatsPage />} />
         </Route>
 

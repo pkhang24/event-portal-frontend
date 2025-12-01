@@ -1,3 +1,4 @@
+// import { useState, useEffect } from 'react';
 import { Layout, Row, Col, Typography, Input, Button, Space, Divider, FloatButton } from 'antd';
 import { 
     FacebookOutlined, 
@@ -8,14 +9,14 @@ import {
     MailOutlined,
     ArrowUpOutlined
 } from '@ant-design/icons';
-import logoImage from '../assets/logo-cnkt_white.png'; // Đảm bảo bạn đã có file logo (hoặc dùng link ảnh tạm)
+import logoImage from '../assets/logo-cnkt_white.png';
 
 const { Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
 const MyFooter = () => {
     return (
-        <Footer style={{ background: '#fff', padding: '60px 50px 20px' }}>
+        <Footer style={{ background: '#ffffffff', padding: '60px 50px 20px' }}>
             {/* === PHẦN CHÍNH (4 CỘT) === */}
             <Row gutter={[40, 30]}>
                 
@@ -114,7 +115,15 @@ const MyFooter = () => {
             </Row>
 
             {/* Nút Back to Top */}
-            <FloatButton.BackTop type="primary" icon={<ArrowUpOutlined />} style={{ right: 24, bottom: 24, width: 50, height: 50 }} />
+            <FloatButton.BackTop 
+                type="primary" 
+                icon={<ArrowUpOutlined />} 
+                style={{ 
+                    right: 24, 
+                    bottom: 24, 
+                    width: 50, 
+                    height: 50 }} 
+            />
         </Footer>
     );
 };

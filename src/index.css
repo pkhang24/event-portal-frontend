@@ -1,136 +1,190 @@
-/* 1. Reset CSS Cơ bản */
+/* =========================================
+   1. RESET CSS & GLOBAL SETTINGS
+   ========================================= */
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   
-  /* Đặt màu nền mặc định là trắng */
+  /* Màu nền mặc định */
   background-color: #ffffff; 
   color: #000000;
 }
 
-/* 2. Cấu hình Body để tràn viền */
 html, body {
   margin: 0 !important;
   padding: 0 !important;
   width: 100%;
-  height: 100%;
+  /* height: 100%; */
   overflow-x: hidden; /* Ẩn thanh cuộn ngang */
-  
-  /* QUAN TRỌNG: Bỏ display: flex để nội dung không bị co cụm ở giữa */
-  display: block; 
+  display: block;     /* Quan trọng để không bị căn giữa */
+  scroll-behavior: smooth; /* Cuộn mượt */
 }
 
-/* 3. Cấu hình #root để nhận full chiều cao */
 #root {
   width: 100%;
-  height: 100%;
   min-height: 100vh;
-}
-
-/* 4. (Tùy chọn) Thanh cuộn đẹp mà chúng ta đã làm trước đó */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-::-webkit-scrollbar-track {
-    background: transparent; 
-}
-::-webkit-scrollbar-thumb {
-    background-color: #c1c1c1; 
-    border-radius: 10px;       
-    border: 2px solid transparent; 
-    background-clip: content-box;  
-}
-::-webkit-scrollbar-thumb:hover {
-    background-color: #1677ff; 
-}
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #c1c1c1 transparent;
-}
-
-/* Styles cho Carousel */
-.home-banner-carousel .slick-slide {
-  text-align: center;
-  height: 400px;
-  line-height: 400px;
-  background: #364d79;
-  overflow: hidden;
-}
-
-.home-banner-carousel .slick-slide img {
   display: block;
-  width: 100%;
-  height: 400px;
-  object-fit: cover;
-  pointer-events: none;
 }
 
-/* Khi di chuột vào carousel, hiện con trỏ "nắm tay" */
-.home-banner-carousel {
-    cursor: grab; 
+/* =========================================
+   2. CUSTOM SCROLLBAR (Thanh cuộn đẹp)
+   ========================================= */
+/* Hỗ trợ Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* Khi đang nhấn giữ chuột để kéo, hiện con trỏ "nắm chặt" */
-.home-banner-carousel:active {
-    cursor: grabbing;
+::-webkit-scrollbar-track {
+  background: transparent; 
 }
 
-/* === CSS BANNER FIX TOÀN DIỆN === */
-
-/* 1. Ép khung chứa chính của Antd Carousel */
-.ant-carousel .slick-slider {
-    height: '400px' !important;
-    width: '1200px' !important;
+::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1; 
+  border-radius: 10px;       
+  border: 2px solid transparent; 
+  background-clip: content-box;  
 }
 
-.ant-carousel {
-    width: '1200px' !important;
+::-webkit-scrollbar-thumb:hover {
+  background-color: #1677ff; /* Màu xanh khi di chuột vào */
 }
 
-/* 2. Ép các lớp danh sách của Slick */
-.home-banner-carousel .slick-list,
-.home-banner-carousel .slick-track {
-    height: '400px' !important;
-    display: flex !important; /* Quan trọng: giúp căn chỉnh chiều cao */
+/* Hỗ trợ Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
 }
 
-/* 3. Ép từng slide riêng lẻ */
-.home-banner-carousel .slick-slide {
-    width: '1200px' !important;
-    height: '400px' !important;
-    /* display: flex !important; */
-    align-items: stretch;
-}
-
-/* 4. Ép thẻ div bao bọc ảnh */
-.home-banner-carousel .slick-slide > div {
-    width: '1200px';
-    height: '400px' !important;
-    display: flex !important;
-}
-.home-banner-item {
-     width: '1200px';
-     height: '400px' !important;
-}
-
-/* 5. Ép chính bức ảnh */
-.home-banner-img {
-    display: block !important;
-    width: '1200px' !important;
-    height: '400px' !important;
-    object-fit: cover !important;
-}
-
-/* === 5. HIỆU ỨNG HOVER CHO NAVBAR (Thêm đoạn này) === */
+/* =========================================
+   3. NAVBAR STYLES
+   ========================================= */
+/* Hiệu ứng hover cho các link trên Navbar */
 .nav-hover-effect {
-    transition: all 0.3s ease; 
+  transition: all 0.3s ease; 
 }
 
 .nav-hover-effect:hover {
-    /* Dùng !important để ghi đè màu đen mặc định */
-    color: #1677ff !important; 
-    /* background-color: rgba(22, 119, 255, 0.05) !important; */
-    border-radius: 6px;
+  /* Dùng !important để ghi đè style mặc định của thẻ a/Link */
+  color: #1677ff !important; 
+  /* background-color: rgba(22, 119, 255, 0.05) !important; */
+  border-radius: 6px;
+}
+
+/* =========================================
+   4. FIX LỖI BANNER / CAROUSEL (QUAN TRỌNG)
+   ========================================= */
+/* Ép tất cả các lớp vỏ của Slick Slider phải cao 100% và rộng 100% */
+.home-banner-carousel,
+.home-banner-carousel .slick-slider,
+.home-banner-carousel .slick-list,
+.home-banner-carousel .slick-track,
+.home-banner-carousel .slick-slide,
+.home-banner-carousel .slick-slide > div {
+    height: '1200px' !important;
+    display: flex !important; /* Giúp căn chỉnh */
+}
+
+/* Ép chiều rộng để không bị bóp méo khi chuyển trang */
+.home-banner-carousel .slick-slide {
+    width: '400px' !important;
+}
+
+/* Đảm bảo ảnh luôn hiển thị dạng block để lấp đầy khung */
+.home-banner-img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+/* Lớp phủ text trên banner (Hero Overlay) */
+.hero-overlay {
+  position: absolute;
+  bottom: 0; 
+  left: 0; 
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+  padding: 60px 40px 30px;
+  color: white;
+  pointer-events: none; /* Để chuột có thể bấm xuyên qua vào ảnh nếu cần kéo */
+}
+
+/* =========================================
+   5. EVENT CARD MODERN STYLES (Card đẹp)
+   ========================================= */
+.event-card {
+  transition: all 0.3s ease !important;
+  border: none !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.event-card:hover {
+  transform: translateY(-5px); /* Bay lên nhẹ */
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+}
+
+.event-card-cover {
+  position: relative;
+  overflow: hidden;
+  height: 200px;
+}
+
+.event-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+/* Hiệu ứng zoom ảnh khi di chuột vào card */
+.event-card:hover .event-card-img,
+.hover-zoom:hover {
+  transform: scale(1.05);
+}
+
+/* Badge ngày tháng nổi bật trên ảnh */
+.date-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 4px 12px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+.date-badge .day {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1677ff;
+  line-height: 1;
+}
+.date-badge .month {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #666;
+  font-weight: 600;
+}
+
+/* =========================================
+   6. XỬ LÝ VĂN BẢN TRÀN (Event Detail)
+   ========================================= */
+.event-content-dark {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.event-content-dark img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 8px;
+  margin: 10px 0;
 }

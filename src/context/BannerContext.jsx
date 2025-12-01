@@ -11,10 +11,24 @@ export const BannerProvider = ({ children }) => {
 
     // Hàm tải dữ liệu
     const fetchBanners = async () => {
-        // Không set loading=true ở đây để tránh flash giao diện khi refresh ngầm
         try {
             const data = await getActiveBanners();
-            setBanners(data);
+            
+            // === KỸ THUẬT PRELOAD ===
+            // Tạo một Promise để tải trước tất cả ảnh
+            const preloadPromises = data.map((banner) => {
+                return new Promise((resolve, reject) => {
+                    const img = new window.Image();
+                    img.src = banner.imageUrl;
+                    img.onload = resolve; // Ảnh tải xong thì báo OK
+                    img.onerror = resolve; // Lỗi cũng báo OK để không chặn app
+                });
+            });
+
+            // Đợi tất cả ảnh tải xong mới set state
+            await Promise.all(preloadPromises);
+            
+            setBanners(data); // Lúc này ảnh đã nằm trong cache trình duyệt
         } catch (error) {
             console.error("Lỗi tải banner:", error);
         } finally {
