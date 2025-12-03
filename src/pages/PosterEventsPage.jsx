@@ -233,9 +233,9 @@ const PosterEventsPage = () => {
                     </Form.Item>
                     <Form.Item name="soLuongGioiHan" label="Số lượng giới hạn (Bỏ trống nếu không giới hạn)">
                         <InputNumber min={1} style={{ width: '100%' }} />
+                    </Form.Item>
                     <Form.Item name="categoryId" label="Danh mục sự kiện" rules={[{ required: true }]}>
                         <CategorySelect />
-                    </Form.Item>
                     </Form.Item>
                     <Form.Item name="anhThumbnail" label="Link ảnh bìa (URL)">
                         <Input />

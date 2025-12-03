@@ -12,6 +12,10 @@ import {
     CheckCircleOutlined, 
     InfoCircleOutlined
 } from '@ant-design/icons';
+
+import moment from 'moment';
+import 'moment/locale/vi';
+
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
 import { getCurrentUser, logout } from '../services/authService';
 
@@ -115,7 +119,7 @@ const MyNavbar = () => {
 
     // Nội dung Popover
     const notificationContent = (
-        <div style={{ width: 350, maxHeight: 400, overflowY: 'auto' }}>
+        <div style={{ width: 400, maxHeight: 400, borderRadius: '8px' ,overflowY: 'auto' }}>
             <div style={{ padding: '10px 16px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between' }}>
                 <strong>Thông báo</strong>
                 {unreadCount > 0 && (
@@ -128,7 +132,7 @@ const MyNavbar = () => {
                     <List.Item 
                         onClick={() => handleRead(item)}
                         style={{ 
-                            padding: '12px 16px', 
+                            padding: '18px 16px', 
                             cursor: 'pointer',
                             background: item.read ? '#fff' : '#e6f7ff', // Nền xanh nhạt nếu chưa đọc
                             transition: 'background 0.3s'
@@ -142,7 +146,7 @@ const MyNavbar = () => {
                                     style={{ backgroundColor: item.type === 'SUCCESS' ? '#52c41a' : '#1890ff' }} 
                                 />
                             }
-                            title={<span style={{ fontSize: 13, fontWeight: item.read ? 400 : 600 }}>{item.title}</span>}
+                            title={<span style={{ fontSize: 14, fontWeight: item.read ? 400 : 600 }}>{item.title}</span>}
                             description={
                                 <div>
                                     <div style={{ fontSize: 12, color: '#666' }}>{item.message}</div>
