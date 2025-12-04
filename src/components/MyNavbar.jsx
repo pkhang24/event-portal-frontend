@@ -13,11 +13,8 @@ import {
     InfoCircleOutlined
 } from '@ant-design/icons';
 
-import moment from 'moment';
-import 'moment/locale/vi';
-
-import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
 import { getCurrentUser, logout } from '../services/authService';
+import NotificationBell from './NotificationBell';
 
 // Import Logo của bạn
 import logoImage from '../assets/logo-cnkt_white.png'; 
@@ -29,9 +26,6 @@ const MyNavbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [user, setUser] = useState(null);
-
-    const [notifications, setNotifications] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
         const currentUser = getCurrentUser();
@@ -83,83 +77,6 @@ const MyNavbar = () => {
             </Link>
         );
     };
-
-    // Hàm tải thông báo
-    const fetchNotifications = async () => {
-        if (!user) return;
-        try {
-            const data = await getNotifications();
-            setNotifications(data);
-            // Đếm số chưa đọc
-            const count = data.filter(n => !n.read).length; // Chú ý: Backend trả về 'read' hay 'isRead' tùy thuộc JSON map, thường là 'read' nếu dùng Lombok @Data mặc định cho boolean
-            setUnreadCount(count);
-        } catch (err) {
-            console.error("Lỗi tải thông báo");
-        }
-    };
-
-    useEffect(() => {
-        fetchNotifications();
-        // Có thể dùng setInterval để tự động check thông báo mới mỗi 60s
-        const interval = setInterval(fetchNotifications, 60000);
-        return () => clearInterval(interval);
-    }, [user]); // Chạy lại khi user thay đổi
-
-    const handleRead = async (item) => {
-        if (!item.read) {
-            await markNotificationAsRead(item.id);
-            fetchNotifications(); // Tải lại để cập nhật UI
-        }
-    };
-
-    const handleReadAll = async () => {
-        await markAllNotificationsAsRead();
-        fetchNotifications();
-    };
-
-    // Nội dung Popover
-    const notificationContent = (
-        <div style={{ width: 400, maxHeight: 400, borderRadius: '8px' ,overflowY: 'auto' }}>
-            <div style={{ padding: '10px 16px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between' }}>
-                <strong>Thông báo</strong>
-                {unreadCount > 0 && (
-                    <a onClick={handleReadAll} style={{ fontSize: 12 }}>Đánh dấu đã đọc hết</a>
-                )}
-            </div>
-            <List
-                dataSource={notifications}
-                renderItem={item => (
-                    <List.Item 
-                        onClick={() => handleRead(item)}
-                        style={{ 
-                            padding: '18px 16px', 
-                            cursor: 'pointer',
-                            background: item.read ? '#fff' : '#e6f7ff', // Nền xanh nhạt nếu chưa đọc
-                            transition: 'background 0.3s'
-                        }}
-                        className="notification-item"
-                    >
-                        <List.Item.Meta
-                            avatar={
-                                <Avatar 
-                                    icon={item.type === 'SUCCESS' ? <CheckCircleOutlined /> : <InfoCircleOutlined />} 
-                                    style={{ backgroundColor: item.type === 'SUCCESS' ? '#52c41a' : '#1890ff' }} 
-                                />
-                            }
-                            title={<span style={{ fontSize: 14, fontWeight: item.read ? 400 : 600 }}>{item.title}</span>}
-                            description={
-                                <div>
-                                    <div style={{ fontSize: 12, color: '#666' }}>{item.message}</div>
-                                    <div style={{ fontSize: 10, color: '#999', marginTop: 4 }}>{moment(item.createdAt).fromNow()}</div>
-                                </div>
-                            }
-                        />
-                    </List.Item>
-                )}
-                locale={{ emptyText: <Empty description="Không có thông báo" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
-            />
-        </div>
-    );
 
     return (
         <Header style={{ 
@@ -227,16 +144,7 @@ const MyNavbar = () => {
                 {user ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         {/* Icon thông báo (trang trí thêm cho đẹp) */}
-                        <Popover 
-                            content={notificationContent} 
-                            trigger="click" 
-                            placement="bottomRight"
-                            overlayInnerStyle={{ padding: 0 }}
-                        >
-                            <Badge count={unreadCount} size="small" offset={[-5, 5]}>
-                                <Button type="text" shape="circle" icon={<BellOutlined style={{ fontSize: '20px' }} />} />
-                            </Badge>
-                        </Popover>
+                        <NotificationBell />
 
                         <Dropdown 
                             menu={{ items: userMenuItems }} 

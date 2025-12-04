@@ -48,7 +48,9 @@ const UserManagementTab = ({
         {
             title: 'Hành động',
             key: 'action',
-            width: 200, // Cố định chiều rộng cột hành động
+            width: 200,       // Đặt chiều rộng cố định đủ cho các nút
+            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            align: 'center',
             render: (_, record) => (
                 <Space size="small">
                     <Tooltip title="Xem chi tiết">
@@ -129,6 +131,9 @@ const UserManagementTab = ({
         {
             title: 'Hành động',
             key: 'action',
+            width: 180,
+            fixed: 'right',   // <<< QUAN TRỌNG
+            align: 'center',
             render: (_, record) => (
                 <Space size="small">
                     <Button 

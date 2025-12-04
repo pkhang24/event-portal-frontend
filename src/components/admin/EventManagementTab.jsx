@@ -23,7 +23,11 @@ const EventManagementTab = ({
             )
         },
         {
-            title: 'Hành động', key: 'action',
+            title: 'Hành động', 
+            key: 'action',
+            width: 180,       // Đặt chiều rộng cố định đủ cho các nút
+            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            align: 'center',
             render: (_, record) => (
                 <Space size="large">
                     {record.trangThai === 'DRAFT' && (
@@ -48,7 +52,11 @@ const EventManagementTab = ({
         { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'tieuDe', width: '30%' },
         { title: 'Người tạo', dataIndex: 'tenNguoiDang', key: 'tenNguoiDang' },
         {
-            title: 'Hành động', key: 'action',
+            title: 'Hành động', 
+            key: 'action',
+            width: 100,       // Đặt chiều rộng cố định đủ cho các nút
+            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            align: 'center',
             render: (_, record) => (
                 <Space size="large">
                     <Button type="primary" ghost size="medium" icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>

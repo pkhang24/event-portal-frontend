@@ -188,3 +188,48 @@ html, body {
   border-radius: 8px;
   margin: 10px 0;
 }
+
+/* === CUSTOM ADMIN SIDEBAR === */
+
+/* 1. Chỉnh sửa Item Menu */
+.custom-admin-menu .ant-menu-item {
+    border-radius: 8px; /* Bo tròn góc */
+    margin-bottom: 8px; /* Khoảng cách giữa các dòng */
+    color: #555; /* Màu chữ mặc định nhẹ nhàng hơn */
+    font-weight: 500;
+}
+
+/* 2. Hiệu ứng khi đang chọn (Active) */
+.custom-admin-menu .ant-menu-item-selected {
+    background-color: #e6f4ff !important; /* Nền xanh nhạt */
+    color: #1677ff !important; /* Chữ xanh đậm */
+    font-weight: 700; /* Chữ đậm */
+}
+
+/* 3. Dấu gạch dọc bên phải item đang chọn (Style mới) */
+.custom-admin-menu .ant-menu-item-selected::after {
+    display: none; /* Tắt dấu gạch mặc định của AntD cũ */
+}
+.custom-admin-menu .ant-menu-item-selected {
+    position: relative;
+}
+.custom-admin-menu .ant-menu-item-selected::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #1677ff;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+/* 4. Tiêu đề nhóm (Group Title) */
+.custom-admin-menu .ant-menu-item-group-title {
+    color: #999;
+    font-size: 12px;
+    font-weight: 600;
+    padding-left: 24px;
+    margin-top: 10px;
+}

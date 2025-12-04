@@ -65,7 +65,7 @@ const DashboardHome = () => {
                 // Gọi song song 2 API biểu đồ (Nếu 1 cái lỗi thì cả 2 biểu đồ sẽ không hiện, nhưng Stats vẫn hiện)
                 const [topEventsRes, categoryRes] = await Promise.all([
                     getTopEventStats(currentYear, 0),
-                    getTopCategoryStats()
+                    getTopCategoryStats(currentYear, 0)
                 ]);
 
                 // Xử lý Biểu đồ Cột
@@ -229,7 +229,7 @@ const DashboardHome = () => {
                 {/* === CỘT PHẢI (NHỎ): Biểu đồ tròn & Sự kiện đang diễn ra === */}
                 <Col xs={24} lg={8}>
                     {/* 1. Biểu đồ Tròn */}
-                    <Card title={<span><PieChartOutlined style={{color: '#ef44efff', marginRight: 8}}/> Tỷ lệ theo chủ đề</span>} bordered={false} style={{ borderRadius: 12, marginBottom: 16 }}>
+                    <Card title={<span><PieChartOutlined style={{color: '#ef44efff', marginRight: 8}}/> Tỷ lệ tham gia theo chủ đề</span>} bordered={false} style={{ borderRadius: 12, marginBottom: 16 }}>
                         <div style={{ height: 200, display: 'flex', justifyContent: 'center' }}>
                             {doughnutData ? <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } } }} /> : 
                             <div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center', color: '#999'}}>Chưa có dữ liệu</div>}

@@ -8,7 +8,8 @@ import {
     FacebookFilled, 
     GlobalOutlined, 
     LinkOutlined,
-    UserOutlined
+    UserOutlined,
+    AppstoreOutlined
 } from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
 import { getEventDetail } from '../services/eventService';
@@ -66,6 +67,15 @@ const EventDetailPage = () => {
 
     const fallbackImage = "https://placehold.co/1200x400/1677ff/ffffff?text=Event+Banner";
 
+    // === 1. THÊM LOGIC KIỂM TRA THỜI GIAN ===
+    const now = new Date();
+    const startTime = new Date(event.thoiGianBatDau);
+    const endTime = new Date(event.thoiGianKetThuc);
+
+    const isUpcoming = startTime > now; // Sắp diễn ra (Được đăng ký)
+    const isEnded = endTime < now;      // Đã kết thúc
+    const isOngoing = startTime <= now && endTime >= now; // Đang diễn ra
+
     return (
         <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}> 
             <MyNavbar />
@@ -76,7 +86,7 @@ const EventDetailPage = () => {
                 <div style={{ marginBottom: 20, color: '#94a3b8' }}>
                     <span style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => navigate('/')}>Trang chủ</span>
                     <span style={{ margin: '0 8px' }}>/</span>
-                    <span style={{ cursor: 'pointer', color: '#94a3b8' }}>Sự kiện</span>
+                    <span style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => navigate('/events')}>Sự kiện</span>
                     <span style={{ margin: '0 8px' }}>/</span>
                     <span style={{ color: '#26292cff' }}>{event.tieuDe}</span>
                 </div>
@@ -184,27 +194,39 @@ const EventDetailPage = () => {
                                 border: '1px solid #ffffffff',
                                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
                             }}>
-                                {/* Nút Đăng ký */}
+                                {/* === 2. SỬA NÚT ĐĂNG KÝ TẠI ĐÂY === */}
                                 <Button 
                                     type="primary" 
                                     size="large" 
                                     block 
                                     style={{ 
                                         height: '48px', fontSize: '16px', fontWeight: 'bold', marginBottom: 24,
-                                        background: '#dfdfdfff', borderColor: '#ffffffff'
+                                        background: isUpcoming ? '#2563eb' : '#475569', // Đổi màu nếu không phải sắp diễn ra
+                                        borderColor: isUpcoming ? '#2563eb' : '#475569',
+                                        color: '#fff'
                                     }}
                                     onClick={handleRegister}
                                     loading={registering}
-                                    disabled={!user || user.role !== 'STUDENT' || event.isRegistered} 
+                                    // Vô hiệu hóa nếu:
+                                    // 1. Chưa đăng nhập
+                                    // 2. Không phải STUDENT
+                                    // 3. Đã đăng ký rồi
+                                    // 4. Sự kiện KHÔNG PHẢI là "Sắp diễn ra" (tức là đang diễn ra hoặc đã kết thúc)
+                                    disabled={!user || user.role !== 'STUDENT' || event.isRegistered || !isUpcoming} 
                                 >
+                                    {/* Logic hiển thị chữ trên nút */}
                                     {!user ? 'Đăng nhập để tham gia' : 
                                       (user.role !== 'STUDENT' ? 'Dành cho sinh viên' : 
-                                        (event.isRegistered ? 'Đã đăng ký tham gia' : 'Đăng ký tham gia ngay')
+                                        (event.isRegistered ? 'Đã đăng ký tham gia' : 
+                                            (isEnded ? 'Sự kiện đã kết thúc' : 
+                                                (isOngoing ? 'Sự kiện đang diễn ra' : 'Đăng ký tham gia ngay')
+                                            )
+                                        )
                                       )
                                     }
                                 </Button>
 
-                                <div style={{ height: 1, background: '#334155', margin: '0 0 24px 0' }} />
+                                <div style={{ height: 1, background: '#e2e8f0', margin: '0 0 24px 0' }} />
 
                                 <Space direction="vertical" size={24} style={{ width: '100%' }}>
                                     <div style={{ display: 'flex', gap: 16 }}>
@@ -230,6 +252,39 @@ const EventDetailPage = () => {
                                         </div>
                                     </div>
 
+                                    {/* 1. Người đăng (SỬA LẠI) */}
+                                    {/* Kiểm tra event.tenNguoiDang thay vì event.nguoiDang */}
+                                    {event.tenNguoiDang && (
+                                        <div style={{ display: 'flex', gap: 16 }}>
+                                            <div style={{ width: 40, height: 40, background: '#13c2c2', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                <UserOutlined style={{ fontSize: '20px', color: '#fff' }} />
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: 4 }}>Người đăng</div>
+                                                {/* Hiển thị trực tiếp chuỗi String */}
+                                                <div style={{ color: '#334155', fontWeight: 500 }}>{event.tenNguoiDang}</div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 2. Chủ đề (SỬA LẠI) */}
+                                    {/* Kiểm tra event.tenDanhMuc */}
+                                    {event.tenDanhMuc && (
+                                        <div style={{ display: 'flex', gap: 16 }}>
+                                            <div style={{ width: 40, height: 40, background: '#722ed1', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                <AppstoreOutlined style={{ fontSize: '20px', color: '#fff' }} />
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: 4 }}>Chủ đề</div>
+                                                <div>
+                                                    <Tag color="blue" style={{ margin: 0, fontWeight: 500 }}>
+                                                        {event.tenDanhMuc}
+                                                    </Tag>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Số người tham gia (Đã fix ở bước trước) */}
                                     <div style={{ display: 'flex', gap: 16 }}>
                                         <div style={{ width: 40, height: 40, background: '#20eb6eff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -240,10 +295,10 @@ const EventDetailPage = () => {
                                             <div style={{ color: '#fff', fontWeight: 500 }}>
                                                 {event.soLuongGioiHan ? (
                                                     <>
-                                                        <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>
+                                                        <span style={{ color: '#334155' }}>
                                                             {event.soNguoiDaDangKy ?? 0}
                                                         </span>
-                                                        <span style={{ color: '#94a3b8' }}> / {event.soLuongGioiHan} người</span>
+                                                        <span style={{ color: '#334155' }}> / {event.soLuongGioiHan} người</span>
                                                         <div style={{ width: '200px', height: 6, background: '#b4b7beff', borderRadius: 3, marginTop: 8, overflow: 'hidden' }}>
                                                             <div style={{ 
                                                                 width: `${Math.min(((event.soNguoiDaDangKy || 0) / event.soLuongGioiHan) * 100, 100)}%`, 

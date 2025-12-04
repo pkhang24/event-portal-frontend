@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Col, Row, Select, message, Spin, Card, Space } from 'antd';
 import { DownloadOutlined, BarChartOutlined } from '@ant-design/icons';
-import { getTopEventStats, getMonthlyEventStats, getTopCategoryStats } from '../../services/adminService';
+import { getTopEventStats, getMonthlyEventStats, getTopCategoryStats, downloadReport } from '../../services/adminService';
 import api from '../../services/api';
 
 import {
@@ -31,16 +31,26 @@ const AdminStatsPage = () => {
 
     const handleExport = async () => {
         try {
-            const response = await api.get('/admin/report/events-excel', { responseType: 'blob' });
+            // Gọi API với year hiện tại
+            // Cách 1: Dùng Service (Khuyên dùng)
+            // const response = await downloadReport(year);
+            
+            // Cách 2: Gọi trực tiếp như code cũ của bạn
+            const response = await api.get(`/admin/report/events-excel?year=${year}`, { 
+                responseType: 'blob' 
+            });
+
             const blob = response.data;
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = "bao-cao-su-kien.xlsx";
+            // Đặt tên file
+            a.download = `Bao_cao_thong_ke_${year}.xlsx`;
             document.body.appendChild(a);
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
+            
             message.success("Xuất báo cáo thành công!");
         } catch (err) {
             message.error("Xuất báo cáo thất bại.");
@@ -53,7 +63,7 @@ const AdminStatsPage = () => {
             const [topEvents, monthlyEvents, topCats] = await Promise.all([
                 getTopEventStats(year, month),
                 getMonthlyEventStats(year),
-                getTopCategoryStats()
+                getTopCategoryStats(year, month)
             ]);
 
             if (topEvents && Object.keys(topEvents).length > 0) {

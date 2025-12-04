@@ -76,8 +76,13 @@ export const getMonthlyEventStats = async (year) => {
     return response.data;
 };
 
-export const getTopCategoryStats = async () => {
-    const response = await api.get('/admin/stats/top-categories');
+export const getTopCategoryStats = async (year, month) => {
+    const params = new URLSearchParams();
+    params.append('year', year);
+    if (month > 0) params.append('month', month);
+    
+    // Gọi API với params
+    const response = await api.get(`/admin/stats/top-categories?${params.toString()}`);
     return response.data;
 };
 
@@ -85,6 +90,14 @@ export const getTopCategoryStats = async () => {
 export const getAllEventsForAdmin = async () => {
     const response = await api.get('/admin/events');
     return response.data;
+};
+
+// adminService.js
+// API này trả về BLOB (File)
+export const downloadReport = async (year) => {
+    return api.get(`/admin/report/events-excel?year=${year}`, {
+        responseType: 'blob'
+    });
 };
 
 // === API CHO CATEGORY ===

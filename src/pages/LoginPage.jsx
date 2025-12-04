@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Form, Input, Button, Card, Alert, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined, HomeOutlined, ThunderboltFilled } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../services/authService';
+import { login, getCurrentUser } from '../services/authService';
 
 const { Title, Text } = Typography;
 
@@ -15,10 +15,27 @@ const LoginPage = () => {
         setLoading(true);
         setError(null);
         try {
+            // 1. Gọi API đăng nhập
             const data = await login(values.email, values.password);
+            
+            // 2. Lưu token vào localStorage
             localStorage.setItem('token', data.token);
+            
             message.success("Đăng nhập thành công!");
-            navigate('/'); 
+
+            // === 3. PHÂN LUỒNG ĐIỀU HƯỚNG (LOGIC MỚI) ===
+            // Lấy thông tin user từ token vừa lưu
+            const currentUser = getCurrentUser();
+
+            if (currentUser?.role === 'ADMIN') {
+                // Nếu là Admin -> Vào thẳng Dashboard
+                navigate('/admin'); 
+            } else {
+                // Nếu là Student hoặc Poster -> Ra Trang chủ
+                navigate('/'); 
+            }
+            // ============================================
+
         } catch (err) {
             setError(err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại.");
         } finally {

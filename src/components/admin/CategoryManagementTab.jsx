@@ -26,7 +26,12 @@ const CategoryManagementTab = ({ categories, loading, viewMode = 'list', onSave,
             render: (count) => <Tag color="blue">{count}</Tag>
         },
         {
-            title: 'Hành động', key: 'action', render: (_, record) => (
+            title: 'Hành động', 
+            key: 'action', 
+            width: 180,       // Đặt chiều rộng cố định đủ cho các nút
+            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            align: 'center',
+            render: (_, record) => (
                 <Space size="large">
                     <Button size="medium" icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
                     <Popconfirm title="Xóa danh mục?" onConfirm={() => onDelete(record.id)}>
@@ -42,7 +47,12 @@ const CategoryManagementTab = ({ categories, loading, viewMode = 'list', onSave,
         { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
         { title: 'Tên Danh mục', dataIndex: 'tenDanhMuc', key: 'tenDanhMuc' },
         {
-            title: 'Hành động', key: 'action', render: (_, record) => (
+            title: 'Hành động', 
+            key: 'action', 
+            width: 180,       // Đặt chiều rộng cố định đủ cho các nút
+            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            align: 'center',
+            render: (_, record) => (
                 <Space size="large">
                     <Button size="medium" type="primary" ghost icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>Khôi phục</Button>
                     <Popconfirm title="Xóa VĨNH VIỄN?" onConfirm={() => onDelete(record.id)}>
