@@ -6,9 +6,9 @@ import { getPublicEvents, getCategories } from '../services/eventService';
 import { useBanner } from '../context/BannerContext';
 import MyNavbar from '../components/MyNavbar';
 import MyFooter from '../components/MyFooter';
-import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Select, Segmented, Tag, Empty, Image} from 'antd';
+import { Layout, Row, Col, Card, Button, Spin, Alert, Typography, Carousel, Select, Segmented, Tag, Empty, Image, Input} from 'antd';
 // Thêm các Icon mới cho tiêu đề
-import { CalendarOutlined, BarsOutlined, EnvironmentOutlined, FireFilled, CalendarFilled, FlagFilled } from '@ant-design/icons';
+import { CalendarOutlined, BarsOutlined, EnvironmentOutlined, FireFilled, CalendarFilled, FlagFilled, ArrowRightOutlined, SearchOutlined } from '@ant-design/icons';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'moment/locale/vi';
@@ -84,6 +84,14 @@ export const CardComponent = ({ event }) => {
         navigate(`/events/${event.id}`);
     };
 
+    // Format ngày tháng đẹp: "Thứ Hai, 30/10/2023"
+    const dateStr = new Date(event.thoiGianBatDau).toLocaleDateString('vi-VN', {
+        weekday: 'long', 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric'
+    });
+
     const renderStatusBadge = () => {
         if (isEnded) {
             return (
@@ -126,44 +134,121 @@ export const CardComponent = ({ event }) => {
     return (
         <Card
             hoverable
-            className="event-card"
+            className="event-card" // Giữ class này để có hiệu ứng bay lên khi hover
             onClick={handleCardClick}
             style={{ 
                 height: '100%', 
-                display: 'flex', flexDirection: 'column', cursor: 'pointer',
-                // Làm mờ nhẹ nếu đã kết thúc
-                opacity: isEnded ? 0.7 : 1,
-                background: isEnded ? '#f5f5f5' : '#fff',
-                borderRadius: '12px', overflow: 'hidden', border: 'none',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                display: 'flex', 
+                flexDirection: 'column',
+                borderRadius: '16px', 
+                border: '1px solid #f0f0f0',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)' // Bóng mờ rất nhẹ
             }}
-            bodyStyle={{ padding: '16px' }}
+            bodyStyle={{ 
+                padding: '20px', 
+                flex: 1, 
+                display: 'flex', 
+                flexDirection: 'column' 
+            }}
             cover={
                 <div style={{ height: '180px', overflow: 'hidden', position: 'relative' }}>
                     <img 
                         alt={event.tieuDe} 
                         src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
-                        className="event-card-img"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s' }}
+                        className="event-card-img" // Giữ class để zoom ảnh
+                        style={{ 
+                            height: '100%', 
+                            width: '100%', 
+                            objectFit: 'cover', 
+                            display: 'block'
+                        }} 
                     />
-                    {/* === GỌI HÀM RENDER BADGE === */}
-                    {renderStatusBadge()}
+                    {/* Nhãn trạng thái (Đè lên ảnh) */}
+                    {isEnded && (
+                        <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 'bold', backdropFilter: 'blur(4px)' }}>
+                            KẾT THÚC
+                        </div>
+                    )}
+                    {isOngoing && (
+                        <div style={{ position: 'absolute', top: 12, right: 12, background: '#ff4d4f', color: '#fff', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 'bold', boxShadow: '0 2px 8px rgba(255,77,79,0.3)' }}>
+                            ĐANG DIỄN RA
+                        </div>
+                    )}
                 </div>
             }
         >
-            <Meta
-                title={<Text strong style={{ fontSize: 16, color: isEnded ? '#888' : 'inherit' }} ellipsis={{ tooltip: event.tieuDe }}>{event.tieuDe}</Text>}
-                description={
-                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        <Text type="secondary"><CalendarOutlined /> {new Date(event.thoiGianBatDau).toLocaleString('vi-VN')}</Text>
-                        <Text type="secondary"><EnvironmentOutlined /> {event.diaDiem}</Text>
-                        <Paragraph ellipsis={{ rows: 2 }} style={{ marginTop: 10, flex: 1 }}>{event.moTaNgan}</Paragraph>
-                        <div style={{ marginTop: 'auto', paddingTop: 10 }}>
-                             {isEnded ? <Button disabled block>Đã kết thúc</Button> : isOngoing ? <Button type="primary" ghost block>Đang diễn ra</Button> : <Button type="primary" block>Xem chi tiết</Button>}
-                        </div>
-                    </div>
-                }
-            />
+            {/* 1. Tag Danh mục (Pill Style) */}
+            <div style={{ marginBottom: '12px' }}>
+                <span style={{ 
+                    display: 'inline-block',
+                    backgroundColor: '#e6f4ff', // Nền xanh rất nhạt
+                    color: '#1677ff',           // Chữ xanh đậm
+                    padding: '4px 12px', 
+                    borderRadius: '100px',      // Bo tròn 2 đầu
+                    fontSize: '12px',
+                    fontWeight: 600 
+                }}>
+                    {event.tenDanhMuc || 'Sự kiện chung'}
+                </span>
+            </div>
+
+            {/* 2. Tiêu đề */}
+            <h3 style={{ 
+                fontSize: '17px', 
+                fontWeight: 700, 
+                color: '#1f1f1f', 
+                marginBottom: '4px',
+                lineHeight: 1.4,
+                height: '38px', // Cố định chiều cao 2 dòng
+                overflow: 'hidden',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+            }}>
+                {event.tieuDe}
+            </h3>
+
+            {/* 3. Thông tin chi tiết (Icon + Text) */}
+            <div style={{ flex: 1, marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', color: '#666', fontSize: '14px' }}>
+                    <CalendarOutlined style={{ marginRight: '8px', fontSize: '16px', color: '#8c8c8c' }} />
+                    {dateStr}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'start', color: '#666', fontSize: '14px' }}>
+                    <EnvironmentOutlined style={{ marginRight: '8px', fontSize: '16px', color: '#8c8c8c', marginTop: '3px' }} />
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {event.diaDiem}
+                    </span>
+                </div>
+            </div>
+
+            {/* 4. Nút bấm (Light Button Style) */}
+            <div style={{ marginTop: 'auto' }}>
+                {isEnded ? (
+                    <Button block disabled style={{ background: '#f5f5f5', borderColor: 'transparent', color: '#bfbfbf', fontWeight: 500 }}>
+                        Đã kết thúc
+                    </Button>
+                ) : (
+                    <Button 
+                        block 
+                        style={{ 
+                            backgroundColor: '#e6f4ff', // Nền xanh nhạt
+                            color: '#1677ff',           // Chữ xanh
+                            border: 'none', 
+                            height: '40px', 
+                            fontWeight: 600,
+                            borderRadius: '8px',
+                            transition: 'all 0.3s'
+                        }}
+                        // Thêm hiệu ứng hover nhẹ cho nút
+                        onMouseEnter={(e) => { e.target.style.backgroundColor = '#bae0ff'; }}
+                        onMouseLeave={(e) => { e.target.style.backgroundColor = '#e6f4ff'; }}
+                    >
+                        Xem chi tiết
+                    </Button>
+                )}
+            </div>
         </Card>
     );
 };
@@ -235,6 +320,7 @@ const EventListView = ({ events }) => {
 };
 
 const HomePage = () => {
+    const navigate = useNavigate();
     const [sourceEvents, setSourceEvents] = useState([]); 
     const [displayedEvents, setDisplayedEvents] = useState([]); 
     const [categories, setCategories] = useState([]);
@@ -284,58 +370,111 @@ const HomePage = () => {
     }, [banners]);
 
     return (
-        <Layout className="layout" style={{ minHeight: '100vh', background: '#ffffffff' }}>
+        <Layout style={{ minHeight: '100vh', background: '#ffffffff' }}>
             <MyNavbar />
 
-            {/* === PHẦN BANNER (GIỮ NGUYÊN CODE CŨ) === */}
-            {banners && banners.length > 0 ? (
-                <div style={{ 
-                    maxWidth: '1200px', 
-                    margin: '30px auto', 
-                    padding: '0 24px',
-                    height: '400px' // Chiều cao cứng cho khung chứa
-                }}>
-                    <Carousel 
-                        autoplay 
-                        draggable={true}
-                        className="home-banner-carousel" // Class này ăn CSS ở Bước 1
-                        style={{ 
-                            height: '400px',
-                            borderRadius: '16px',
-                            overflow: 'hidden',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.15)'
-                        }}
-                    >
-                        {banners.map((banner) => (
-                            <div key={banner.id} className="home-banner-item">
-                                <Image
-                                    src={banner.imageUrl}
-                                    alt="Event Banner"
-                                    preview={false} // Tắt tính năng bấm vào để xem ảnh to
-                                    width="1200px"
-                                    height="400px"
-                                    style={{ objectFit: 'cover' }}
-                                    
-                                    // === KỸ THUẬT TỐI ƯU ===
-                                    // Hiển thị một khung màu hoặc ảnh mờ trong khi đợi ảnh thật tải
-                                    placeholder={
-                                        <div style={{ 
-                                            width: '1200px', 
-                                            height: '400px', 
-                                            background: 'linear-gradient(90deg, #f0f2f5 25%, #e6f7ff 37%, #f0f2f5 63%)', // Hiệu ứng Skeleton loader
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <Spin /> {/* Hoặc hiện icon loading */}
+            {/* === 1. HERO SECTION MỚI (SPLIT LAYOUT) === */}
+            <div style={{ 
+                maxWidth: '1300px', 
+                margin: '0 auto', 
+                padding: '20px 24px', 
+                width: '100%',
+                marginBlock: '40px'
+            }}>
+                <Row gutter={[48, 24]} align="middle">
+                    
+                    {/* --- CỘT TRÁI: BANNER ĐỘNG --- */}
+                    <Col xs={24} lg={14}>
+                        {!loading && banners.length > 0 ? (
+                            <div style={{ 
+                                borderRadius: '24px', 
+                                overflow: 'hidden', 
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                                height: '400px', // Chiều cao cố định cho banner
+                                position: 'relative'
+                            }}>
+                                <Carousel 
+                                    autoplay 
+                                    draggable={true}
+                                    className="home-banner-carousel"
+                                    style={{ height: '100%', background: '#1e293b' }}
+                                >
+                                    {banners.map((banner) => (
+                                        <div key={banner.id} className="home-banner-item">
+                                            <img 
+                                                src={banner.imageUrl} 
+                                                alt="Event Banner" 
+                                                className="home-banner-img"
+                                                onError={(e) => {e.target.src = "https://placehold.co/800x500/1e293b/ffffff?text=Event"}}
+                                            />
+                                            {/* Đã bỏ lớp phủ text ở đây để ảnh sạch sẽ */}
                                         </div>
-                                    }
-                                />
+                                    ))}
+                                </Carousel>
                             </div>
-                        ))}
-                    </Carousel>
-                </div>
-            ) : null}
+                        ) : (
+                            // Placeholder khi chưa có banner
+                            <div style={{ height: '450px', background: '#1e293b', borderRadius: '24px' }} />
+                        )}
+                    </Col>
+
+                    {/* --- CỘT PHẢI: THÔNG TIN & NÚT BẤM --- */}
+                    <Col xs={24} lg={10}>
+                        <div style={{ paddingLeft: '10px' }}>
+                            {/* Tag nhỏ (Optional - có thể bỏ nếu muốn) */}
+                            {/* <Tag color="cyan" style={{ marginBottom: 16, padding: '5px 10px', fontSize: '14px', border: 'none', background: 'rgba(56, 189, 248, 0.1)' }}>
+                                🎓 Cổng thông tin chính thức
+                            </Tag> */}
+                            
+                            {/* HÀNG 1: Tiêu đề chính */}
+                            <Title style={{ 
+                                color: '#3b82f6', 
+                                fontSize: '28px', 
+                                lineHeight: '1', 
+                                marginBottom: '8px', // Khoảng cách với hàng 2
+                                fontWeight: 700,
+                                fontStyle: 'italic'
+                            }}>
+                                Cổng thông tin sự kiện - chuyên đề
+                            </Title>
+                            
+                            {/* HÀNG 2: Tên Khoa (Màu xanh nổi bật) */}
+                            <Title level={2} style={{ 
+                                color: '#3b82f6', // Màu xanh dương
+                                fontSize: '54px', 
+                                marginTop: 0, 
+                                marginBottom: '24px', // Khoảng cách với mô tả
+                                fontWeight: 800 
+                            }}>
+                                Khoa Công nghệ & Kỹ thuật
+                            </Title>
+                            
+                            {/* HÀNG 3: Mô tả */}
+                            <Typography.Paragraph style={{ 
+                                color: '#94a3b8', 
+                                fontSize: '18px', 
+                                marginBottom: '40px', 
+                                lineHeight: '1.6' 
+                            }}>
+                                Khám phá những cơ hội học tập, kết nối và phát triển bản thân thông qua hàng loạt workshop, hội thảo chuyên sâu và các cuộc thi hấp dẫn dành riêng cho sinh viên.
+                            </Typography.Paragraph>
+
+                            {/* Nút hành động & Tìm kiếm */}
+                            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                                <Button 
+                                    type="default" // Đổi thành default để dễ custom style nền trắng
+                                    size="large" 
+                                    icon={<ArrowRightOutlined />} 
+                                    onClick={() => navigate('/events')}
+                                    className="btn-outline-custom" // <<< THÊM CLASS NÀY
+                                >
+                                    Xem tất cả sự kiện
+                                </Button>
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
+            </div>
 
             
 

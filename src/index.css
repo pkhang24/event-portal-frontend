@@ -233,3 +233,32 @@ html, body {
     padding-left: 24px;
     margin-top: 10px;
 }
+
+/* src/App.css */
+
+/* Nút Outline (Trạng thái bình thường) */
+.btn-outline-custom {
+  background-color: #ffffff !important; /* Nền trắng */
+  border: 2px solid #3b82f6 !important; /* Viền xanh (dày 2px cho rõ) */
+  color: #3b82f6 !important;            /* Chữ xanh */
+  font-weight: 700 !important;          /* Chữ đậm */
+  border-radius: 12px !important;       /* Bo góc */
+  height: 56px !important;              /* Chiều cao */
+  padding: 0 32px !important;           /* Padding ngang */
+  box-shadow: none !important;          /* Tắt bóng đổ mặc định nếu có */
+  transition: all 0.3s ease !important; /* Hiệu ứng chuyển đổi mượt */
+}
+
+/* Hiệu ứng khi di chuột (Hover) */
+.btn-outline-custom:hover {
+  background-color: #3b82f6 !important; /* Đổi nền xanh */
+  color: #ffffff !important;            /* Đổi chữ trắng */
+  transform: translateY(-3px);          /* Bật lên 3px */
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3) !important; /* Bóng đổ xanh */
+}
+
+/* Hiệu ứng khi nhấn (Active) */
+.btn-outline-custom:active {
+  transform: translateY(-1px); /* Nhún xuống 1 chút */
+  box-shadow: 0 5px 10px rgba(59, 130, 246, 0.2) !important;
+}

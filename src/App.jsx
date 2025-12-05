@@ -15,6 +15,7 @@ import SearchPage from './pages/SearchPage';
 import EventDetailPage from './pages/EventDetailPage';
 import MyTicketsPage from './pages/MyTicketsPage';
 import PosterEventsPage from './pages/PosterEventsPage';
+import CreateEventPage from './pages/CreateEventPage';
 import CheckInPage from './pages/CheckInPage';
 import HistoryPage from './pages/HistoryPage';
 
@@ -36,7 +37,7 @@ const AppContent = () => {
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   const handleFabClick = () => {
-      navigate('/manage-events');
+      navigate('/create-event');
   };
 
   // Chỉ hiện FAB nếu là Poster và không ở trang quản lý
@@ -68,6 +69,8 @@ const AppContent = () => {
         <Route path="/my-tickets" element={<MyTicketsPage />} />
 
         <Route path="/manage-events" element={<PosterEventsPage />} />
+
+        <Route path="/create-event" element={<CreateEventPage />} />
 
         <Route path="/check-in" element={<CheckInPage />} />
 

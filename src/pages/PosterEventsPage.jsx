@@ -121,7 +121,7 @@ const PosterEventsPage = () => {
         // Lấy token từ localStorage
         const token = localStorage.getItem('token');
         // Tạo URL và kích hoạt tải xuống
-        const url = `http://192.168.2.5:8080/api/events/${eventId}/participants/export`;
+        const url = `http://192.168.2.8:8080/api/events/${eventId}/participants/export`;
         fetch(url, {
             method: 'GET',
             headers: {
@@ -155,6 +155,9 @@ const PosterEventsPage = () => {
         { 
             title: 'Hành động', 
             key: 'action',
+            width: 200,       // Đặt chiều rộng cố định đủ cho các nút
+            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            align: 'center',
             render: (_, record) => (
                 <Space>
                     <Button icon={<TeamOutlined />} onClick={() => showParticipantModal(record.id)}>
@@ -189,7 +192,7 @@ const PosterEventsPage = () => {
         <Layout className="layout" style={{ minHeight: '100vh' }}>
             {contextHolder}
             <MyNavbar />
-            <Content style={{ padding: '0 50px', marginTop: 30 }}>
+            <Content style={{ padding: '0 50px', marginTop: 20 }}>
                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
                      Quay lại
                 </Button>
