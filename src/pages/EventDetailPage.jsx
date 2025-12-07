@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Layout, Typography, Button, Spin, Alert, message, Card, Row, Col, Avatar, Breadcrumb, Divider, Space, Tag } from 'antd';
 import { 
     CalendarOutlined, 
@@ -22,25 +22,38 @@ const { Title, Paragraph, Text } = Typography;
 const EventDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const source = location.state?.source;
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [registering, setRegistering] = useState(false);
     const [error, setError] = useState(null);
     const user = getCurrentUser();
+    const isPreviewMode = id === 'preview' || location.state?.previewData;
 
     useEffect(() => {
         const fetchEvent = async () => {
-            try {
-                const data = await getEventDetail(id);
-                setEvent(data);
-            } catch (err) {
-                setError("Không tìm thấy sự kiện hoặc có lỗi xảy ra.");
-            } finally {
+            // 1. NẾU LÀ CHẾ ĐỘ XEM TRƯỚC
+            if (isPreviewMode && location.state?.previewData) {
+                setEvent(location.state.previewData);
                 setLoading(false);
+                return; // Dừng, không gọi API
+            }
+
+            // 2. NẾU LÀ CHẾ ĐỘ THƯỜNG (Có ID thật)
+            if (id && id !== 'preview') {
+                try {
+                    const data = await getEventDetail(id);
+                    setEvent(data);
+                } catch (err) {
+                    setError("Không tìm thấy sự kiện.");
+                } finally {
+                    setLoading(false);
+                }
             }
         };
         fetchEvent();
-    }, [id]);
+    }, [id, location.state]);
 
     const handleRegister = async () => {
         if (!user) {
@@ -79,6 +92,36 @@ const EventDetailPage = () => {
     return (
         <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}> 
             <MyNavbar />
+
+            {/* === THÊM THANH CẢNH BÁO NẾU ĐANG XEM TRƯỚC === */}
+            {isPreviewMode && (
+                <Alert 
+                    message="Chế độ Xem trước" 
+                    description="Đây là hình ảnh hiển thị của sự kiện. Dữ liệu chưa được lưu vào hệ thống." 
+                    type="warning" 
+                    showIcon 
+                    
+                    // === SỬA NÚT HÀNH ĐỘNG TẠI ĐÂY ===
+                    action={
+                        source === 'list' ? (
+                            // TRƯỜNG HỢP 1: Đến từ Danh sách quản lý -> Quay về danh sách
+                            <Button size="large" type="default" onClick={() => navigate('/manage-events')}>
+                                Quay lại quản lý
+                            </Button>
+                        ) : (
+                            // TRƯỜNG HỢP 2: Đến từ Form tạo -> Quay về sửa tiếp (Logic cũ)
+                            <Button size="large" type="primary" onClick={() => {
+                                navigate('/create-event', { state: { formData: event } });
+                            }}>
+                                Quay lại chỉnh sửa
+                            </Button>
+                        )
+                    }
+                    // =================================
+                    
+                    style={{ marginBottom: 20, borderRadius: 0 }}
+                />
+            )}
             
             <Content style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px', width: '100%' }}>
                 
@@ -212,10 +255,11 @@ const EventDetailPage = () => {
                                     // 2. Không phải STUDENT
                                     // 3. Đã đăng ký rồi
                                     // 4. Sự kiện KHÔNG PHẢI là "Sắp diễn ra" (tức là đang diễn ra hoặc đã kết thúc)
-                                    disabled={!user || user.role !== 'STUDENT' || event.isRegistered || !isUpcoming} 
+                                    disabled={!user || user.role !== 'STUDENT' || event.isRegistered || !isUpcoming || isPreviewMode} 
                                 >
                                     {/* Logic hiển thị chữ trên nút */}
-                                    {!user ? 'Đăng nhập để tham gia' : 
+                                    {isPreviewMode ? 'Đây là bản xem trước' : 
+                                    (!user ? 'Đăng nhập để tham gia' : 
                                       (user.role !== 'STUDENT' ? 'Dành cho sinh viên' : 
                                         (event.isRegistered ? 'Đã đăng ký tham gia' : 
                                             (isEnded ? 'Sự kiện đã kết thúc' : 
@@ -223,7 +267,7 @@ const EventDetailPage = () => {
                                             )
                                         )
                                       )
-                                    }
+                                    )}
                                 </Button>
 
                                 <div style={{ height: 1, background: '#e2e8f0', margin: '0 0 24px 0' }} />

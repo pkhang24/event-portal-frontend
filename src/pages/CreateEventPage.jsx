@@ -5,12 +5,14 @@ import {
 } from 'antd';
 import { 
     CloudUploadOutlined, ArrowLeftOutlined, 
-    SaveOutlined, SendOutlined 
+    SaveOutlined, SendOutlined, EyeOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MyNavbar from '../components/MyNavbar';
 import { createEvent } from '../services/eventService';
 import { getCategories } from '../services/eventService'; // Import hàm lấy danh mục
+import { getCurrentUser } from '../services/authService';
+import dayjs from 'dayjs';
 // Import component MyFooter nếu muốn
 
 const { Content } = Layout;
@@ -20,6 +22,7 @@ const { Dragger } = Upload;
 
 const CreateEventPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
@@ -31,35 +34,70 @@ const CreateEventPage = () => {
     const [coverFileList, setCoverFileList] = useState([]);         // Ảnh to (Chi tiết)
 
     useEffect(() => {
-        // Load danh mục khi vào trang
         getCategories().then(setCategories).catch(console.error);
-    }, []);
 
-    const onFinish = async (values) => {
+        // === LOGIC KHÔI PHỤC DỮ LIỆU KHI QUAY LẠI TỪ PREVIEW ===
+        if (location.state?.formData) {
+            const data = location.state.formData;
+            
+            // 1. Điền lại Form (Lưu ý: DatePicker cần object dayjs)
+            form.setFieldsValue({
+                ...data,
+                thoiGianBatDau: data.thoiGianBatDau ? dayjs(data.thoiGianBatDau) : null,
+                thoiGianKetThuc: data.thoiGianKetThuc ? dayjs(data.thoiGianKetThuc) : null,
+                categoryId: data.categoryId // Đảm bảo ID danh mục được set lại
+            });
+
+            // 2. Khôi phục ảnh Thumbnail (nếu có)
+            if (data.anhThumbnail) {
+                setThumbnailFileList([{
+                    uid: '-1',
+                    name: 'thumbnail.png',
+                    status: 'done',
+                    url: data.anhThumbnail
+                }]);
+            }
+
+            // 3. Khôi phục ảnh Bìa (nếu có)
+            if (data.anhBia) {
+                setCoverFileList([{
+                    uid: '-2',
+                    name: 'cover.png',
+                    status: 'done',
+                    url: data.anhBia
+                }]);
+            }
+        }
+    }, [form, location.state]);
+
+    const handleSubmit = async (statusType) => {
         setLoading(true);
         try {
-            // Xử lý upload ảnh (giả lập: lấy URL từ fileList hoặc upload lên server thật ở đây)
-            // Ở đây mình giả sử bạn nhập URL vào input (hoặc xử lý logic upload riêng)
-            // Để đơn giản cho demo, ta sẽ lấy value từ input text nếu có, hoặc xử lý file sau
+            // Validate form trước
+            const values = await form.validateFields();
+
+            // ... (Logic xử lý upload ảnh cũ) ...
             
             const eventData = {
                 ...values,
-                // Chuyển đổi thời gian sang ISO string
                 thoiGianBatDau: values.thoiGianBatDau.toISOString(),
                 thoiGianKetThuc: values.thoiGianKetThuc.toISOString(),
-                // Giả lập URL ảnh (Bạn thay thế logic upload thật vào đây)
                 anhThumbnail: thumbnailFileList.length > 0 ? "https://via.placeholder.com/300x200" : null,
+                anhBia: coverFileList.length > 0 ? "https://via.placeholder.com/1200x400" : null,
                 
-                // Lưu ý: Backend của bạn cần có trường này (ví dụ: anhBia, coverImage...)
-                // Nếu chưa có, bạn cần thêm vào Entity và DTO ở Backend
-                anhBia: coverFileList.length > 0 ? "https://via.placeholder.com/1200x400" : null 
+                // === GỬI TRẠNG THÁI ===
+                trangThai: statusType // 'DRAFT' hoặc 'PENDING'
             };
 
             await createEvent(eventData);
-            message.success('Tạo sự kiện thành công!');
-            navigate('/manage-events'); // Quay về trang quản lý
+            
+            const msg = statusType === 'PENDING' ? 'Đã gửi yêu cầu duyệt!' : 'Đã lưu bản nháp!';
+            message.success(msg);
+            
+            navigate('/manage-events');
         } catch (error) {
-            message.error('Có lỗi xảy ra khi tạo sự kiện.');
+            console.error(error);
+            message.error('Có lỗi xảy ra, vui lòng kiểm tra lại thông tin.');
         } finally {
             setLoading(false);
         }
@@ -84,6 +122,65 @@ const CreateEventPage = () => {
         maxCount: 1, // Chỉ cho 1 ảnh bìa
     });
 
+    const handlePreview = async () => {
+        try {
+            const values = await form.validateFields();
+            
+            // Xử lý ảnh thumbnail
+            let previewThumbnail = null;
+            if (thumbnailFileList.length > 0) {
+                const file = thumbnailFileList[0];
+                previewThumbnail = file.url || URL.createObjectURL(file.originFileObj);
+            }
+
+            // Xử lý ảnh bìa
+            let previewCover = null;
+            if (coverFileList.length > 0) {
+                const file = coverFileList[0];
+                previewCover = file.url || URL.createObjectURL(file.originFileObj);
+            }
+
+            const selectedCategory = categories.find(c => c.id === values.categoryId);
+            const currentUser = getCurrentUser();
+
+        // 4. Tạo object giả lập dữ liệu giống hệt Backend trả về
+        const previewEventData = {
+            id: 'preview', // ID giả
+            tieuDe: values.tieuDe,
+            moTaNgan: values.moTaNgan,
+            noiDung: values.noiDung,
+            diaDiem: values.diaDiem,
+            soLuongGioiHan: values.soLuongGioiHan || null,
+            // Format lại ngày tháng sang String ISO để truyền đi
+            thoiGianBatDau: values.thoiGianBatDau.toISOString(),
+            thoiGianKetThuc: values.thoiGianKetThuc.toISOString(),
+                
+            anhThumbnail: previewThumbnail,
+            anhBia: previewCover,
+                
+            // === SỬA LỖI HIỂN THỊ: Gửi đúng tên trường mà DetailPage mong đợi ===
+            tenNguoiDang: currentUser?.hoTen || 'Admin', 
+            tenDanhMuc: selectedCategory?.tenDanhMuc || 'Chưa chọn',
+                
+            // Giữ lại ID để logic quay lại hoạt động
+            categoryId: values.categoryId, 
+
+            isPreview: true
+        };
+
+        // === GỬI KÈM source: 'create' ===
+        navigate('/events/preview', { 
+            state: { 
+                previewData: previewEventData, 
+                source: 'create' // Đánh dấu là đến từ trang tạo
+            } 
+        });
+
+    } catch (error) {
+        message.error("Vui lòng điền đủ thông tin bắt buộc để xem trước!");
+    }
+};
+
     return (
         <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
             <MyNavbar />
@@ -91,9 +188,9 @@ const CreateEventPage = () => {
             <Content style={{ maxWidth: 1200, margin: '0 auto', padding: '24px', width: '100%' }}>
                 {/* Header & Nút quay lại */}
                 <div style={{ marginBottom: 24 }}>
-                    <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ paddingLeft: 0, color: '#666' }}>
+                    {/* <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ paddingLeft: 0, color: '#666' }}>
                         Quay lại
-                    </Button>
+                    </Button> */}
                     <Title level={2} style={{ marginTop: 0 }}>Tạo Sự Kiện Mới</Title>
                     <Text type="secondary">Điền các thông tin dưới đây để tạo sự kiện cho khoa Công nghệ và Kỹ thuật.</Text>
                 </div>
@@ -101,7 +198,7 @@ const CreateEventPage = () => {
                 <Form 
                     form={form} 
                     layout="vertical" 
-                    onFinish={onFinish}
+                    onFinish={handleSubmit}
                     size="large"
                 >
                     <Row gutter={24}>
@@ -192,16 +289,36 @@ const CreateEventPage = () => {
                                 </Form.Item>
 
                                 <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Button type="primary" htmlType="submit" block icon={<SendOutlined />} loading={loading}>
-                                        Gửi duyệt
-                                    </Button>
-                                    <Button block icon={<SaveOutlined />}>
-                                        Lưu nháp
-                                    </Button>
-                                    <Button type="text" block danger onClick={() => navigate(-1)}>
-                                        Hủy
-                                    </Button>
-                                </Space>
+                                {/* Nút Gửi duyệt -> PENDING */}
+                                <Button 
+                                    type="primary" 
+                                    block 
+                                    icon={<SendOutlined />} 
+                                    loading={loading}
+                                    onClick={() => handleSubmit('PENDING')}
+                                >
+                                    Gửi duyệt
+                                </Button>
+                                
+                                {/* Nút Xem trước -> (Logic cũ giữ nguyên) */}
+                                <Button block icon={<EyeOutlined />} onClick={handlePreview}>
+                                    Xem trước
+                                </Button>
+
+                                {/* Nút Lưu nháp -> DRAFT */}
+                                <Button 
+                                    block 
+                                    icon={<SaveOutlined />}
+                                    onClick={() => handleSubmit('DRAFT')}
+                                    loading={loading}
+                                >
+                                    Lưu nháp
+                                </Button>
+
+                                <Button type="text" block danger onClick={() => navigate(-1)}>
+                                    Hủy
+                                </Button>
+                            </Space>
                             </Card>
                         </Col>
                     </Row>

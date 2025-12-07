@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Typography, Table, Button, Modal, Form, Input, DatePicker, InputNumber, message, Tag, Space ,Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, DownloadOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, DownloadOutlined, ArrowLeftOutlined, EyeOutlined } from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
 import { getMyEvents, createEvent, updateEvent, getParticipants } from '../services/eventService';
 import { softDeleteEvent } from '../services/eventService';
@@ -87,6 +87,28 @@ const PosterEventsPage = () => {
         }
     };
 
+    // Hàm xử lý khi bấm nút Xem trước ở bảng
+    const handlePreviewFromList = (record) => {
+        // Map dữ liệu từ record của bảng sang cấu trúc mà EventDetailPage hiểu
+        const previewData = {
+            ...record,
+            // Backend trả về object, DetailPage cần string phẳng để hiển thị (theo code sửa mới nhất)
+            tenNguoiDang: record.nguoiDang?.hoTen || 'Bạn',
+            tenDanhMuc: record.category?.tenDanhMuc || 'Danh mục',
+            
+            // Flag quan trọng để bật chế độ xem trước
+            isPreview: true 
+        };
+
+        // === GỬI KÈM source: 'list' ===
+        navigate('/events/preview', { 
+            state: { 
+                previewData, 
+                source: 'list' // Đánh dấu là đến từ danh sách
+            } 
+        });
+    };
+
     // --- HÀM XÓA (NẾU CHƯA CÓ) ---
     const handleDeleteEvent = async (id) => {
         try {
@@ -163,8 +185,8 @@ const PosterEventsPage = () => {
                     <Button icon={<TeamOutlined />} onClick={() => showParticipantModal(record.id)}>
                         DS Tham gia
                     </Button>
+                    <Button icon={<EyeOutlined />} onClick={() => handlePreviewFromList(record)}/>
                     <Button icon={<EditOutlined />} onClick={() => showModal(record)}>
-                        Sửa
                     </Button>
                     <Popconfirm
                         title="Chuyển vào thùng rác?"
@@ -202,7 +224,7 @@ const PosterEventsPage = () => {
                         type="primary" 
                         icon={<PlusOutlined />} 
                         style={{ float: 'right', marginBottom: 20 }}
-                        onClick={() => showModal(null)}
+                        onClick={() => navigate('/create-event')}
                     >
                         Tạo sự kiện mới
                     </Button>
