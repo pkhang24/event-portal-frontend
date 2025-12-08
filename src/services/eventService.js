@@ -58,6 +58,14 @@ export const softDeleteEvent = async (eventId) => {
     return response.data;
 };
 
+export const getDeletedEvents = async () => {
+    const response = await api.get('/admin/events/trash');
+    return response.data;
+};
+export const restoreEvent = (id) => api.post(`/admin/events/trash/${id}/restore`);
+export const permanentDeleteEvent = (id) => api.delete(`/admin/events/trash/${id}/permanent`);
+
+
 // Lấy danh sách SV tham gia
 export const getParticipants = async (eventId) => {
     const response = await api.get(`/events/${eventId}/participants`);

@@ -1,39 +1,64 @@
 import { useEffect, useState } from 'react';
+import { 
+    Layout, Table, Button, Space, Typography, Tag, 
+    Modal, message, Tooltip, Tabs, Badge, Input, Card 
+} from 'antd';
+import { 
+    PlusOutlined, EditOutlined, DeleteOutlined, 
+    EyeOutlined, SearchOutlined, TeamOutlined, 
+    DownloadOutlined, UndoOutlined, DeleteFilled,
+    CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, FileTextOutlined
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { Layout, Typography, Table, Button, Modal, Form, Input, DatePicker, InputNumber, message, Tag, Space ,Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, DownloadOutlined, ArrowLeftOutlined, EyeOutlined } from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
-import { getMyEvents, createEvent, updateEvent, getParticipants } from '../services/eventService';
-import { softDeleteEvent } from '../services/eventService';
-import CategorySelect from '../components/CategorySelect'; // <-- THÊM DÒNG NÀY
-import dayjs from 'dayjs'; // Cần cài: npm install dayjs
+// Đảm bảo import đủ các service
+import { 
+    getMyEvents, softDeleteEvent, // Xóa mềm (vào thùng rác)
+    restoreEvent, permanentDeleteEvent, // (Cần thêm API này nếu muốn xóa thật)
+    getParticipants // Lấy danh sách tham gia
+} from '../services/eventService'; 
+import dayjs from 'dayjs';
 
 const { Content } = Layout;
 const { Title } = Typography;
-const { RangePicker } = DatePicker;
+const { Search } = Input;
 
 const PosterEventsPage = () => {
-    const [form] = Form.useForm(); // Để điều khiển Form
-    const [events, setEvents] = useState([]);
+    const navigate = useNavigate();
+    
+    // 1. STATE QUẢN LÝ DỮ LIỆU
+    const [events, setEvents] = useState([]);      // Sự kiện active (chưa xóa)
+    const [trashEvents, setTrashEvents] = useState([]); // Sự kiện trong thùng rác
     const [loading, setLoading] = useState(true);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [editingEvent, setEditingEvent] = useState(null); // Lưu event đang sửa
+    
+    // 2. STATE UI
+    const [activeTab, setActiveTab] = useState('ALL');
+    const [searchText, setSearchText] = useState('');
 
+    // 3. STATE MODAL DANH SÁCH THAM GIA
     const [isParticipantModalVisible, setIsParticipantModalVisible] = useState(false);
     const [participants, setParticipants] = useState([]);
     const [loadingParticipants, setLoadingParticipants] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState(null);
 
-    const [messageApi, contextHolder] = message.useMessage();
-    const navigate = useNavigate();
-
+    // --- LOAD DỮ LIỆU ---
     const fetchEvents = async () => {
         setLoading(true);
         try {
             const data = await getMyEvents();
-            setEvents(data);
-        } catch (err) {
-            messageApi.error("Không thể tải sự kiện của bạn.");
+
+            const active = data.filter(e => !e.deleted); 
+            const trash = data.filter(e => e.deleted);
+            
+            // Giả lập lọc Soft Delete (Nếu backend trả về field 'deleted' hoặc 'isDeleted')
+            // Nếu backend chưa có, ta tạm thời coi tất cả là active
+            setEvents(active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+            setTrashEvents(trash.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+            
+            setEvents(active);
+            setTrashEvents(trash);
+        } catch (error) {
+            message.error("Lỗi tải danh sách sự kiện.");
         } finally {
             setLoading(false);
         }
@@ -43,82 +68,62 @@ const PosterEventsPage = () => {
         fetchEvents();
     }, []);
 
-    const showModal = (event = null) => {
-        setEditingEvent(event);
-        if (event) {
-            // Nếu là sửa -> Điền form
-            form.setFieldsValue({
-                ...event,
-                thoiGian: [dayjs(event.thoiGianBatDau), dayjs(event.thoiGianKetThuc)],
-            });
-        } else {
-            // Nếu là tạo mới -> Reset form
-            form.resetFields();
-        }
-        setIsModalVisible(true);
+    // --- CÁC HÀNH ĐỘNG ---
+
+    // 1. Chuyển hướng sang trang Tạo Mới (Thay vì mở Modal popup cũ)
+    const handleCreateNew = () => {
+        navigate('/create-event');
     };
 
-    const handleCancel = () => {
-        setIsModalVisible(false);
-        setEditingEvent(null);
+    // 2. Chuyển hướng sang trang Sửa (Gửi kèm dữ liệu)
+    const handleEdit = (record) => {
+        navigate('/create-event', { state: { formData: record, isEdit: true } });
     };
 
-    const onFinish = async (values) => {
-        const eventData = {
-            ...values,
-            thoiGianBatDau: values.thoiGian[0].toISOString(),
-            thoiGianKetThuc: values.thoiGian[1].toISOString(),
-        };
-
-        try {
-            if (editingEvent) {
-                // Cập nhật
-                await updateEvent(editingEvent.id, eventData);
-                messageApi.success("Cập nhật sự kiện thành công!");
-            } else {
-                // Tạo mới
-                await createEvent(eventData);
-                messageApi.success("Tạo sự kiện thành công! (Đang chờ Admin duyệt)");
-            }
-            setIsModalVisible(false);
-            fetchEvents(); // Tải lại danh sách
-        } catch (err) {
-            messageApi.error("Thao tác thất bại.");
-        }
-    };
-
-    // Hàm xử lý khi bấm nút Xem trước ở bảng
-    const handlePreviewFromList = (record) => {
-        // Map dữ liệu từ record của bảng sang cấu trúc mà EventDetailPage hiểu
+    // 3. Xem trước
+    const handlePreview = (record) => {
         const previewData = {
             ...record,
-            // Backend trả về object, DetailPage cần string phẳng để hiển thị (theo code sửa mới nhất)
             tenNguoiDang: record.nguoiDang?.hoTen || 'Bạn',
             tenDanhMuc: record.category?.tenDanhMuc || 'Danh mục',
-            
-            // Flag quan trọng để bật chế độ xem trước
             isPreview: true 
         };
+        navigate('/events/preview', { state: { previewData, source: 'list' } });
+    };
 
-        // === GỬI KÈM source: 'list' ===
-        navigate('/events/preview', { 
-            state: { 
-                previewData, 
-                source: 'list' // Đánh dấu là đến từ danh sách
-            } 
+    // 4. Xóa mềm (Vào thùng rác)
+    const handleSoftDelete = (id) => {
+        Modal.confirm({
+            title: 'Chuyển vào thùng rác?',
+            content: 'Sự kiện sẽ bị ẩn khỏi hệ thống nhưng có thể khôi phục lại.',
+            okText: 'Xóa',
+            okType: 'danger',
+            cancelText: 'Hủy',
+            onOk: async () => {
+                try {
+                    await softDeleteEvent(id); 
+                    message.success('Đã chuyển vào thùng rác');
+                    fetchEvents();
+                } catch (error) {
+                    message.error('Xóa thất bại');
+                }
+            }
         });
     };
 
-    // --- HÀM XÓA (NẾU CHƯA CÓ) ---
-    const handleDeleteEvent = async (id) => {
+    // 5. Khôi phục
+    const handleRestore = async (id) => {
         try {
-            await softDeleteEvent(id);
-            message.success("Đã chuyển sự kiện vào thùng rác!");
+            // Cần implement API restoreEvent(id) ở service
+            await restoreEvent(id); 
+            message.success('Đã khôi phục sự kiện');
             fetchEvents();
-        } catch (err) { message.error("Xóa thất bại."); }
+        } catch (error) {
+            message.error('Khôi phục thất bại');
+        }
     };
 
-    // --- HÀM MỚI CHO MODAL DANH SÁCH THAM GIA ---
+    // 6. Xem danh sách tham gia
     const showParticipantModal = async (eventId) => {
         setSelectedEventId(eventId);
         setIsParticipantModalVisible(true);
@@ -133,168 +138,246 @@ const PosterEventsPage = () => {
         }
     };
 
-    const handleCancelParticipantModal = () => {
-        setIsParticipantModalVisible(false);
-        setParticipants([]);
-    };
-
-    // --- HÀM MỚI ĐỂ XUẤT EXCEL ---
-    const handleExportExcel = (eventId) => {
-        // Lấy token từ localStorage
+    // 7. Xuất Excel
+    const handleExportExcel = () => {
+        if (!selectedEventId) return;
         const token = localStorage.getItem('token');
-        // Tạo URL và kích hoạt tải xuống
-        const url = `http://192.168.2.8:8080/api/events/${eventId}/participants/export`;
+        // URL API xuất Excel của bạn
+        const url = `http://192.168.2.8:8080/api/events/${selectedEventId}/participants/export`;
+        
+        message.loading("Đang xuất file...", 1);
+        
         fetch(url, {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         })
-        .then(res => res.blob())
+        .then(res => {
+            if (!res.ok) throw new Error("Lỗi network");
+            return res.blob();
+        })
         .then(blob => {
             const href = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = href;
-            link.setAttribute('download', 'danh-sach-tham-gia.xlsx');
+            link.setAttribute('download', `danh-sach-tham-gia-${selectedEventId}.xlsx`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            message.success("Xuất file thành công!");
         })
         .catch(err => message.error("Xuất file thất bại!"));
     };
 
+    // --- CẤU HÌNH CỘT BẢNG ---
     const columns = [
-        { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'tieuDe' },
+        { title: 'ID', dataIndex: 'id', width: 60, align: 'center' },
         { 
-            title: 'Trạng thái', 
-            dataIndex: 'trangThai', 
-            key: 'trangThai',
-            render: (status) => (
-                <Tag color={status === 'PUBLISHED' ? 'green' : 'orange'}>{status}</Tag>
+            title: 'Tên sự kiện', dataIndex: 'tieuDe', 
+            render: (text) => <span style={{ fontWeight: 500 }}>{text}</span>,
+            // Filter tìm kiếm local
+            onFilter: (value, record) => record.tieuDe.toLowerCase().includes(value.toLowerCase())
+        },
+        { 
+            title: 'Trạng thái', dataIndex: 'trangThai', width: 140,
+            render: (status) => {
+                let config = { color: 'default', text: 'Nháp', icon: <FileTextOutlined /> };
+                if (status === 'PUBLISHED') config = { color: 'success', text: 'Công khai', icon: <CheckCircleOutlined /> };
+                if (status === 'PENDING') config = { color: 'processing', text: 'Chờ duyệt', icon: <ClockCircleOutlined /> };
+                if (status === 'CANCELLED') config = { color: 'error', text: 'Đã hủy', icon: <CloseCircleOutlined /> };
+                return <Tag icon={config.icon} color={config.color}>{config.text}</Tag>;
+            }
+        },
+        { 
+            title: 'Bắt đầu', dataIndex: 'thoiGianBatDau', width: 160,
+            render: (date) => dayjs(date).format('DD/MM/YYYY HH:mm')
+        },
+        { 
+            title: 'Người tham gia', key: 'participants', width: 150, align: 'center',
+            render: (_, record) => (
+                <Button 
+                    size="medium" 
+                    icon={<TeamOutlined />} 
+                    onClick={() => showParticipantModal(record.id)}
+                    disabled={activeTab === 'TRASH' || record.trangThai === 'DRAFT'}
+                >
+                    {/* Hiển thị số lượng nếu có, hoặc chỉ icon */}
+                    Chi tiết
+                </Button>
             )
         },
-        { title: 'Địa điểm', dataIndex: 'diaDiem', key: 'diaDiem' },
-        { 
-            title: 'Hành động', 
-            key: 'action',
-            width: 200,       // Đặt chiều rộng cố định đủ cho các nút
-            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
-            align: 'center',
+        {
+            title: 'Hành động', key: 'action', width: 200, align: 'center',
             render: (_, record) => (
+                <Space size="middle">
+                    {activeTab === 'TRASH' ? (
+                        <>
+                            <Tooltip title="Khôi phục">
+                                <Button type="primary" ghost icon={<UndoOutlined />} onClick={() => handleRestore(record.id)} />
+                            </Tooltip>
+                            <Tooltip title="Xóa vĩnh viễn">
+                                <Button danger icon={<DeleteFilled />} />
+                            </Tooltip>
+                        </>
+                    ) : (
+                        <>
+                            <Tooltip title="Xem trước">
+                                <Button size="medium" icon={<EyeOutlined />} onClick={() => handlePreview(record)} />
+                            </Tooltip>
+                            
+                            <Tooltip title="Sửa">
+                                <Button 
+                                    size="medium" icon={<EditOutlined />} 
+                                    onClick={() => handleEdit(record)} 
+                                    disabled={record.trangThai === 'PUBLISHED' || record.trangThai === 'CANCELLED'} 
+                                />
+                            </Tooltip>
+        
+                            <Tooltip title="Xóa">
+                                <Button 
+                                    size="medium" danger icon={<DeleteOutlined />} 
+                                    onClick={() => handleSoftDelete(record.id)} 
+                                />
+                            </Tooltip>
+                        </>
+                    )}
+                </Space>
+            ),
+        },
+    ];
+
+    // --- LỌC DỮ LIỆU ---
+    const getDataSource = () => {
+        if (activeTab === 'TRASH') return trashEvents;
+        
+        let filtered = events;
+        if (activeTab !== 'ALL') {
+            filtered = events.filter(e => e.trangThai === activeTab);
+        }
+        
+        if (searchText) {
+            filtered = filtered.filter(item => item.tieuDe.toLowerCase().includes(searchText.toLowerCase()));
+        }
+        return filtered;
+    };
+
+    // Hàm phụ trợ đếm số lượng
+    const getCount = (status) => events.filter(e => e.trangThai === status).length;
+
+    const tabItems = [
+        { 
+            key: 'ALL', 
+            label: (
                 <Space>
-                    <Button icon={<TeamOutlined />} onClick={() => showParticipantModal(record.id)}>
-                        DS Tham gia
-                    </Button>
-                    <Button icon={<EyeOutlined />} onClick={() => handlePreviewFromList(record)}/>
-                    <Button icon={<EditOutlined />} onClick={() => showModal(record)}>
-                    </Button>
-                    <Popconfirm
-                        title="Chuyển vào thùng rác?"
-                        onConfirm={() => handleDeleteEvent(record.id)}
-                        okText="Xóa" cancelText="Hủy"
-                    >
-                        <Button danger icon={<DeleteOutlined />} />
-                    </Popconfirm>
+                    Tất cả
+                    <Badge count={events.length} showZero={false} style={{ backgroundColor: '#f0f0f0', color: '#999' }} />
                 </Space>
             )
         },
-    ];
-
-    // Cột cho Modal danh sách tham gia
-    const participantColumns = [
-        { title: 'Họ tên', dataIndex: 'hoTen', key: 'hoTen' },
-        { title: 'MSSV', dataIndex: 'mssv', key: 'mssv' },
-        { title: 'Email', dataIndex: 'email', key: 'email' },
-        { title: 'Trạng thái', dataIndex: 'trangThaiVe', key: 'trangThaiVe',
-          render: (status) => <Tag color={status === 'ATTENDED' ? 'green' : 'blue'}>{status}</Tag>
-        }
+        { 
+            key: 'DRAFT', 
+            label: (
+                <Space>
+                    Bản nháp
+                    <Badge count={getCount('DRAFT')} showZero color="#d9d9d9" style={{ color: '#999' }} />
+                </Space>
+            )
+        },
+        { 
+            key: 'PENDING', 
+            label: (
+                <Space>
+                    Chờ duyệt
+                    <Badge count={getCount('PENDING')} showZero color="#1890ff" />
+                </Space>
+            )
+        },
+        { 
+            key: 'PUBLISHED', 
+            label: (
+                <Space>
+                    Đã công khai
+                    <Badge count={getCount('PUBLISHED')} showZero color="#52c41a" />
+                </Space>
+            ) 
+        },
+        { 
+            key: 'TRASH', 
+            label: (
+                <Space>
+                    Thùng rác
+                    <Badge count={trashEvents.length} showZero color="#ff4d4f" />
+                </Space>
+            ) 
+        },
     ];
 
     return (
-        <Layout className="layout" style={{ minHeight: '100vh' }}>
-            {contextHolder}
+        <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
             <MyNavbar />
-            <Content style={{ padding: '0 50px', marginTop: 20 }}>
-                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
-                     Quay lại
-                </Button>
-                <div style={{ background: '#fff', padding: 24, minHeight: 380 }}>
-                    <Title level={2} style={{ float: 'left' }}>Quản lý Sự kiện</Title>
-                    <Button 
-                        type="primary" 
-                        icon={<PlusOutlined />} 
-                        style={{ float: 'right', marginBottom: 20 }}
-                        onClick={() => navigate('/create-event')}
-                    >
+            <Content style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px', width: '100%' }}>
+                {/* HEADER */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+                    <Title level={2} style={{ margin: 0 }}>Quản lý Sự kiện</Title>
+                    <Button type="primary" icon={<PlusOutlined />} size="large" onClick={handleCreateNew}>
                         Tạo sự kiện mới
                     </Button>
-                    <Table dataSource={events} columns={columns} rowKey="id" loading={loading} />
                 </div>
+
+                <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    {/* TOOLBAR */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <Tabs 
+                            activeKey={activeTab} 
+                            onChange={setActiveTab} 
+                            items={tabItems} 
+                            type="card"
+                            style={{ flex: 1 }}
+                        />
+                        <Search 
+                            placeholder="Tìm kiếm..." 
+                            allowClear 
+                            onSearch={setSearchText} 
+                            style={{ width: 250, marginLeft: 16 }} 
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
+                    </div>
+
+                    <Table 
+                        columns={columns} 
+                        dataSource={getDataSource()} 
+                        rowKey="id"
+                        loading={loading}
+                        pagination={{ pageSize: 8 }}
+                    />
+                </div>
+
+                {/* MODAL DANH SÁCH THAM GIA */}
+                <Modal
+                    title="Danh sách tham gia"
+                    open={isParticipantModalVisible}
+                    onCancel={() => setIsParticipantModalVisible(false)}
+                    width={900}
+                    footer={[
+                        <Button key="download" icon={<DownloadOutlined />} type="primary" onClick={handleExportExcel}>
+                            Xuất Excel
+                        </Button>,
+                        <Button key="close" onClick={() => setIsParticipantModalVisible(false)}>Đóng</Button>
+                    ]}
+                >
+                    <Table
+                        dataSource={participants}
+                        loading={loadingParticipants}
+                        rowKey="id"
+                        pagination={{ pageSize: 5 }}
+                        columns={[
+                            { title: 'MSSV', dataIndex: 'mssv' },
+                            { title: 'Họ tên', dataIndex: 'hoTen' },
+                            { title: 'Email', dataIndex: 'email' },
+                            { title: 'Thời gian ĐK', dataIndex: 'createdAt', render: (d) => dayjs(d).format('DD/MM/YYYY HH:mm') }
+                        ]}
+                    />
+                </Modal>
             </Content>
-
-            {/* Modal Tạo/Sửa sự kiện */}
-            <Modal
-                title={editingEvent ? "Sửa sự kiện" : "Tạo sự kiện mới"}
-                open={isModalVisible}
-                onCancel={handleCancel}
-                footer={null} // Tắt footer mặc định
-                destroyOnHidden
-            >
-                <Form form={form} layout="vertical" onFinish={onFinish} name="event_form">
-                    <Form.Item name="tieuDe" label="Tiêu đề" rules={[{ required: true }]}>
-                        <Input />
-                    </Form.Item>
-                    <Form.Item name="moTaNgan" label="Mô tả ngắn" rules={[{ required: true }]}>
-                        <Input.TextArea />
-                    </Form.Item>
-                    <Form.Item name="noiDung" label="Nội dung chi tiết" rules={[{ required: true }]}>
-                        <Input.TextArea rows={4} />
-                    </Form.Item>
-                    <Form.Item name="thoiGian" label="Thời gian" rules={[{ required: true }]}>
-                        <RangePicker showTime format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} />
-                    </Form.Item>
-                    <Form.Item name="diaDiem" label="Địa điểm" rules={[{ required: true }]}>
-                        <Input />
-                    </Form.Item>
-                    <Form.Item name="soLuongGioiHan" label="Số lượng giới hạn (Bỏ trống nếu không giới hạn)">
-                        <InputNumber min={1} style={{ width: '100%' }} />
-                    </Form.Item>
-                    <Form.Item name="categoryId" label="Danh mục sự kiện" rules={[{ required: true }]}>
-                        <CategorySelect />
-                    </Form.Item>
-                    <Form.Item name="anhThumbnail" label="Link ảnh bìa (URL)">
-                        <Input />
-                    </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
-                            {editingEvent ? "Cập nhật" : "Tạo mới"}
-                        </Button>
-                    </Form.Item>
-                </Form>
-            </Modal>
-
-            {/* === MODAL MỚI: DANH SÁCH THAM GIA === */}
-            <Modal
-                title="Danh sách sinh viên tham gia"
-                open={isParticipantModalVisible}
-                onCancel={handleCancelParticipantModal}
-                width={1000}
-                footer={[
-                    <Button key="download" icon={<DownloadOutlined />} type="primary" onClick={() => handleExportExcel(selectedEventId)}>
-                        Xuất Excel
-                    </Button>,
-                    <Button key="close" onClick={handleCancelParticipantModal}>
-                        Đóng
-                    </Button>
-                ]}
-            >
-                <Table
-                    dataSource={participants}
-                    columns={participantColumns}
-                    rowKey="userId"
-                    loading={loadingParticipants}
-                />
-            </Modal>
         </Layout>
     );
 };
