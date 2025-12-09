@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { 
-    Layout, Table, Button, Space, Typography, Tag, 
+    Layout, Table, Button, Space, Typography, Tag, Popconfirm,
     Modal, message, Tooltip, Tabs, Badge, Input, Card 
 } from 'antd';
 import { 
@@ -13,10 +13,10 @@ import { useNavigate } from 'react-router-dom';
 import MyNavbar from '../components/MyNavbar';
 // Đảm bảo import đủ các service
 import { 
-    getMyEvents, softDeleteEvent, // Xóa mềm (vào thùng rác)
-    restoreEvent, permanentDeleteEvent, // (Cần thêm API này nếu muốn xóa thật)
-    getParticipants // Lấy danh sách tham gia
-} from '../services/eventService'; 
+    getMyEvents, softDeleteEvent, 
+    getMyDeletedEvents, restoreEvent, permanentDeleteEvent, // Import mới
+    getParticipants 
+} from '../services/eventService';
 import dayjs from 'dayjs';
 
 const { Content } = Layout;
@@ -25,6 +25,7 @@ const { Search } = Input;
 
 const PosterEventsPage = () => {
     const navigate = useNavigate();
+    // const [modal, contextHolder] = Modal.useModal();
     
     // 1. STATE QUẢN LÝ DỮ LIỆU
     const [events, setEvents] = useState([]);      // Sự kiện active (chưa xóa)
@@ -45,20 +46,24 @@ const PosterEventsPage = () => {
     const fetchEvents = async () => {
         setLoading(true);
         try {
-            const data = await getMyEvents();
+            // 1. Luôn lấy danh sách ACTIVE (cho các tab All, Draft, Pending, Published)
+            // Vì Backend dùng @Where nên getMyEvents chỉ trả về cái chưa xóa -> OK
+            const activeData = await getMyEvents();
+            
+            // 2. Luôn lấy danh sách TRASH (cho tab Thùng rác)
+            // Gọi API mới chuyên lấy rác
+            const trashData = await getMyDeletedEvents();
 
-            const active = data.filter(e => !e.deleted); 
-            const trash = data.filter(e => e.deleted);
+            // 3. Set State
+            // Sort theo ngày tạo mới nhất
+            const sortFn = (a, b) => new Date(b.createdAt) - new Date(a.createdAt);
             
-            // Giả lập lọc Soft Delete (Nếu backend trả về field 'deleted' hoặc 'isDeleted')
-            // Nếu backend chưa có, ta tạm thời coi tất cả là active
-            setEvents(active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-            setTrashEvents(trash.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-            
-            setEvents(active);
-            setTrashEvents(trash);
+            setEvents(activeData.sort(sortFn));
+            setTrashEvents(trashData.sort(sortFn));
+
         } catch (error) {
-            message.error("Lỗi tải danh sách sự kiện.");
+            console.error(error);
+            message.error("Lỗi tải dữ liệu.");
         } finally {
             setLoading(false);
         }
@@ -66,7 +71,7 @@ const PosterEventsPage = () => {
 
     useEffect(() => {
         fetchEvents();
-    }, []);
+    }, []); // Chỉ chạy 1 lần khi mount, sau này gọi lại khi thao tác xong
 
     // --- CÁC HÀNH ĐỘNG ---
 
@@ -91,35 +96,36 @@ const PosterEventsPage = () => {
         navigate('/events/preview', { state: { previewData, source: 'list' } });
     };
 
-    // 4. Xóa mềm (Vào thùng rác)
-    const handleSoftDelete = (id) => {
-        Modal.confirm({
-            title: 'Chuyển vào thùng rác?',
-            content: 'Sự kiện sẽ bị ẩn khỏi hệ thống nhưng có thể khôi phục lại.',
-            okText: 'Xóa',
-            okType: 'danger',
-            cancelText: 'Hủy',
-            onOk: async () => {
-                try {
-                    await softDeleteEvent(id); 
-                    message.success('Đã chuyển vào thùng rác');
-                    fetchEvents();
-                } catch (error) {
-                    message.error('Xóa thất bại');
-                }
-            }
-        });
+    // --- SỬA HÀM XÓA MỀM ---
+    const handleDeleteEvent = async (id) => {
+        try {
+            await softDeleteEvent(id);
+            message.success('Đã chuyển vào thùng rác');
+            fetchEvents();
+        } catch (error) {
+            message.error('Xóa thất bại');
+        }
     };
 
-    // 5. Khôi phục
+    // --- SỬA HÀM KHÔI PHỤC ---
     const handleRestore = async (id) => {
         try {
-            // Cần implement API restoreEvent(id) ở service
-            await restoreEvent(id); 
+            await restoreEvent(id);
             message.success('Đã khôi phục sự kiện');
             fetchEvents();
         } catch (error) {
             message.error('Khôi phục thất bại');
+        }
+    };
+
+    // --- SỬA HÀM XÓA CỨNG ---
+    const handlePermanentDelete = async (id) => {
+        try {
+            await permanentDeleteEvent(id);
+            message.success('Đã xóa vĩnh viễn');
+            fetchEvents();
+        } catch (error) {
+            message.error('Lỗi khi xóa vĩnh viễn');
         }
     };
 
@@ -206,37 +212,48 @@ const PosterEventsPage = () => {
             )
         },
         {
-            title: 'Hành động', key: 'action', width: 200, align: 'center',
+            title: 'Hành động', key: 'action', width: 180, align: 'center',
             render: (_, record) => (
                 <Space size="middle">
                     {activeTab === 'TRASH' ? (
                         <>
+                            {/* Nút Khôi phục */}
                             <Tooltip title="Khôi phục">
-                                <Button type="primary" ghost icon={<UndoOutlined />} onClick={() => handleRestore(record.id)} />
+                                <Button type="primary" ghost size="medium" icon={<UndoOutlined />} onClick={() => handleRestore(record.id)} />
                             </Tooltip>
-                            <Tooltip title="Xóa vĩnh viễn">
-                                <Button danger icon={<DeleteFilled />} />
-                            </Tooltip>
+                            
+                            {/* Nút Xóa Vĩnh Viễn (Có Popconfirm) */}
+                            <Popconfirm
+                                title="Xóa vĩnh viễn?"
+                                description="Hành động này không thể hoàn tác!"
+                                onConfirm={() => handlePermanentDelete(record.id)}
+                                okText="Xóa luôn"
+                                cancelText="Hủy"
+                                okButtonProps={{ danger: true }}
+                            >
+                                <Button danger size="medium" icon={<DeleteFilled />} />
+                            </Popconfirm>
                         </>
                     ) : (
                         <>
-                            <Tooltip title="Xem trước">
-                                <Button size="medium" icon={<EyeOutlined />} onClick={() => handlePreview(record)} />
-                            </Tooltip>
+                            <Tooltip title="Xem trước"><Button size="medium" icon={<EyeOutlined />} onClick={() => handlePreview(record)} /></Tooltip>
                             
                             <Tooltip title="Sửa">
-                                <Button 
-                                    size="medium" icon={<EditOutlined />} 
-                                    onClick={() => handleEdit(record)} 
-                                    disabled={record.trangThai === 'PUBLISHED' || record.trangThai === 'CANCELLED'} 
-                                />
+                                <Button size="medium" icon={<EditOutlined />} onClick={() => handleEdit(record)} disabled={record.trangThai === 'PUBLISHED'} />
                             </Tooltip>
-        
+                            
+                            {/* Nút Xóa Mềm (Có Popconfirm) */}
                             <Tooltip title="Xóa">
-                                <Button 
-                                    size="medium" danger icon={<DeleteOutlined />} 
-                                    onClick={() => handleSoftDelete(record.id)} 
-                                />
+                                <Popconfirm
+                                    title="Chuyển vào thùng rác?"
+                                    description="Bạn có thể khôi phục lại sau."
+                                    onConfirm={() => handleDeleteEvent(record.id)}
+                                    okText="Đồng ý"
+                                    cancelText="Hủy"
+                                    okButtonProps={{ danger: true }}
+                                >
+                                    <Button size="medium" danger icon={<DeleteOutlined />} />
+                                </Popconfirm>
                             </Tooltip>
                         </>
                     )}
@@ -278,7 +295,7 @@ const PosterEventsPage = () => {
             label: (
                 <Space>
                     Bản nháp
-                    <Badge count={getCount('DRAFT')} showZero color="#d9d9d9" style={{ color: '#999' }} />
+                    <Badge count={getCount('DRAFT')} showZero color="#d9d9d9" style={{ color: '#525252ff' }} />
                 </Space>
             )
         },
@@ -313,6 +330,7 @@ const PosterEventsPage = () => {
 
     return (
         <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
+            {/* {contextHolder} */}
             <MyNavbar />
             <Content style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px', width: '100%' }}>
                 {/* HEADER */}

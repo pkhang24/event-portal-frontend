@@ -52,19 +52,29 @@ export const updateEvent = async (id, eventData) => {
     return response.data;
 };
 
-// Xóa mềm sự kiện (cho Poster hoặc Admin)
+// ... các hàm cũ giữ nguyên
+
+// Xóa mềm (Gọi API DELETE thường -> Backend @SQLDelete tự xử lý)
 export const softDeleteEvent = async (eventId) => {
-    const response = await api.delete(`/events/${eventId}`);
+    const response = await api.delete(`/events/${eventId}`); 
     return response.data;
 };
 
-export const getDeletedEvents = async () => {
-    const response = await api.get('/admin/events/trash');
+// Lấy thùng rác của tôi
+export const getMyDeletedEvents = async () => {
+    const response = await api.get('/events/my-trash');
     return response.data;
 };
-export const restoreEvent = (id) => api.post(`/admin/events/trash/${id}/restore`);
-export const permanentDeleteEvent = (id) => api.delete(`/admin/events/trash/${id}/permanent`);
 
+// Khôi phục
+export const restoreEvent = async (id) => {
+    await api.post(`/events/${id}/restore`);
+};
+
+// Xóa cứng
+export const permanentDeleteEvent = async (id) => {
+    await api.delete(`/events/${id}/permanent`);
+};
 
 // Lấy danh sách SV tham gia
 export const getParticipants = async (eventId) => {

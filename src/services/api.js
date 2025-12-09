@@ -14,6 +14,13 @@ api.interceptors.request.use(
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
+
+        // if (config.url.includes('events') && config.method === 'delete') {
+        //     console.log("---------------------------------------------");
+        //     console.log("🕵️ [DEBUG AXIOS] Request Config:", config);
+        //     console.log("🔗 Full URL:", (config.baseURL || '') + config.url);
+        //     console.log("---------------------------------------------");
+        // }
         return config;
     },
     (error) => {

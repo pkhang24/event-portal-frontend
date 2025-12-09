@@ -82,6 +82,7 @@ const EventManagementTab = ({
             rowKey="id" 
             loading={loading} 
             pagination={{ pageSize: 8 }}
+            // scroll={{ x: 1000 }}
         />
     );
 };
