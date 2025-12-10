@@ -1,4 +1,5 @@
 import api from './api';
+import axios from 'axios';
 
 // Lấy thống kê Dashboard
 export const getDashboardStats = async () => {
@@ -50,6 +51,16 @@ export const toggleUserLock = async (userId) => {
 // Duyệt sự kiện
 export const approveEvent = async (eventId) => {
     await api.put(`/admin/events/${eventId}/approve`);
+};
+
+// Từ chối sự kiện (PENDING -> DRAFT)
+export const rejectEvent = async (id, reason = "") => {
+    await api.put(`/admin/events/${id}/reject`, { reason });
+};
+
+// Hủy sự kiện (PUBLISHED -> CANCELLED)
+export const cancelEvent = async (id, reason = "") => {
+    await api.put(`/admin/events/${id}/cancel`, { reason });
 };
 
 // Lấy thống kê sự kiện
@@ -120,8 +131,10 @@ export const getAllBanners = async () => {
     const response = await api.get('/admin/banners');
     return response.data;
 };
-export const createBanner = (bannerData) => {
-    return api.post('/admin/banners', bannerData);
+export const createBanner = (formData) => {
+    return axios.post('/api/banners', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
 };
 export const updateBanner = (id, bannerData) => {
     return api.put(`/admin/banners/${id}`, bannerData);

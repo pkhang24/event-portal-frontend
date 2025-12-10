@@ -9,9 +9,10 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MyNavbar from '../components/MyNavbar';
-import { createEvent } from '../services/eventService';
+import { createEvent, updateEvent } from '../services/eventService';
 import { getCategories } from '../services/eventService'; // Import hàm lấy danh mục
 import { getCurrentUser } from '../services/authService';
+import { uploadFile } from '../services/uploadService';
 import dayjs from 'dayjs';
 // Import component MyFooter nếu muốn
 
@@ -24,6 +25,7 @@ const CreateEventPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [form] = Form.useForm();
+    const { formData, isEdit } = location.state || {};
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
     // const [fileList, setFileList] = useState([]); // Ảnh bìa
@@ -33,11 +35,16 @@ const CreateEventPage = () => {
     const [thumbnailFileList, setThumbnailFileList] = useState([]); // Ảnh nhỏ (Card)
     const [coverFileList, setCoverFileList] = useState([]);         // Ảnh to (Chi tiết)
 
+    // State để hiển thị ảnh preview và trạng thái loading
+    const [thumbnailUrl, setThumbnailUrl] = useState('');
+    const [coverUrl, setCoverUrl] = useState('');
+    const [loadingUpload, setLoadingUpload] = useState(false);
+
     useEffect(() => {
         getCategories().then(setCategories).catch(console.error);
 
         // === LOGIC KHÔI PHỤC DỮ LIỆU KHI QUAY LẠI TỪ PREVIEW ===
-        if (location.state?.formData) {
+        if (isEdit && formData) {
             const data = location.state.formData;
             
             // 1. Điền lại Form (Lưu ý: DatePicker cần object dayjs)
@@ -48,27 +55,33 @@ const CreateEventPage = () => {
                 categoryId: data.categoryId // Đảm bảo ID danh mục được set lại
             });
 
-            // 2. Khôi phục ảnh Thumbnail (nếu có)
-            if (data.anhThumbnail) {
+            // Tạo giả file object cho Antd hiển thị ảnh cũ
+            if (formData.anhThumbnail) {
                 setThumbnailFileList([{
                     uid: '-1',
                     name: 'thumbnail.png',
                     status: 'done',
-                    url: data.anhThumbnail
+                    url: formData.anhThumbnail,
                 }]);
             }
-
-            // 3. Khôi phục ảnh Bìa (nếu có)
-            if (data.anhBia) {
+            if (formData.anhBia) {
                 setCoverFileList([{
                     uid: '-2',
                     name: 'cover.png',
                     status: 'done',
-                    url: data.anhBia
+                    url: formData.anhBia,
                 }]);
             }
+            
+            // Set value cho form (bao gồm cả input ẩn chứa link ảnh)
+            form.setFieldsValue({
+                ...formData,
+                anhThumbnail: formData.anhThumbnail,
+                anhBia: formData.anhBia,
+                // ... convert date ...
+            });
         }
-    }, [form, location.state]);
+    }, [isEdit, formData, form]);
 
     const handleSubmit = async (statusType) => {
         setLoading(true);
@@ -82,22 +95,28 @@ const CreateEventPage = () => {
                 ...values,
                 thoiGianBatDau: values.thoiGianBatDau.toISOString(),
                 thoiGianKetThuc: values.thoiGianKetThuc.toISOString(),
-                anhThumbnail: thumbnailFileList.length > 0 ? "https://via.placeholder.com/300x200" : null,
-                anhBia: coverFileList.length > 0 ? "https://via.placeholder.com/1200x400" : null,
+                // Nếu đang sửa thì giữ nguyên ảnh cũ nếu không up mới
+                anhThumbnail: thumbnailFileList.length > 0 ? "url_anh_moi..." : (formData?.anhThumbnail || null),
+                anhBia: coverFileList.length > 0 ? "url_anh_moi..." : (formData?.anhBia || null),
                 
-                // === GỬI TRẠNG THÁI ===
+                // Cập nhật trạng thái
                 trangThai: statusType // 'DRAFT' hoặc 'PENDING'
             };
 
-            await createEvent(eventData);
-            
-            const msg = statusType === 'PENDING' ? 'Đã gửi yêu cầu duyệt!' : 'Đã lưu bản nháp!';
-            message.success(msg);
+            if (isEdit) {
+                // === LOGIC CẬP NHẬT ===
+                await updateEvent(formData.id, eventData);
+                message.success('Đã lưu thay đổi!');
+            } else {
+                // === LOGIC TẠO MỚI ===
+                await createEvent(eventData);
+                message.success(statusType === 'PENDING' ? 'Đã gửi duyệt!' : 'Đã lưu nháp!');
+            }
             
             navigate('/manage-events');
         } catch (error) {
             console.error(error);
-            message.error('Có lỗi xảy ra, vui lòng kiểm tra lại thông tin.');
+            message.error('Có lỗi xảy ra.');
         } finally {
             setLoading(false);
         }
@@ -160,7 +179,7 @@ const CreateEventPage = () => {
                 
             // === SỬA LỖI HIỂN THỊ: Gửi đúng tên trường mà DetailPage mong đợi ===
             tenNguoiDang: currentUser?.hoTen || 'Admin', 
-            tenDanhMuc: selectedCategory?.tenDanhMuc || 'Chưa chọn',
+            tenDanhMuc: selectedCategory ? selectedCategory.tenDanhMuc : 'Chưa chọn danh mục',
                 
             // Giữ lại ID để logic quay lại hoạt động
             categoryId: values.categoryId, 
@@ -179,7 +198,95 @@ const CreateEventPage = () => {
     } catch (error) {
         message.error("Vui lòng điền đủ thông tin bắt buộc để xem trước!");
     }
-};
+    };
+
+    // 3. HÀM XỬ LÝ UPLOAD CHUNG (Dùng cho customRequest)
+    const handleCustomUpload = async ({ file, onSuccess, onError }, type) => {
+        try {
+            // Gọi API upload file lên Backend
+            const url = await uploadFile(file);
+            
+            // Upload thành công -> Báo cho Ant Design biết
+            onSuccess(url); 
+            message.success(`Tải ảnh ${type === 'THUMB' ? 'Thumbnail' : 'Bìa'} thành công!`);
+
+            // Cập nhật giá trị URL vào Form ẩn để gửi đi sau này
+            if (type === 'THUMB') {
+                form.setFieldsValue({ anhThumbnail: url });
+            } else {
+                form.setFieldsValue({ anhBia: url });
+            }
+        } catch (error) {
+            onError(error);
+            message.error('Upload thất bại, vui lòng thử lại.');
+        }
+    };
+
+    // 4. HÀM KIỂM TRA FILE TRƯỚC KHI UPLOAD
+    const beforeUpload = (file) => {
+        const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif';
+        if (!isJpgOrPng) {
+            message.error('Chỉ hỗ trợ file JPG/PNG/GIF!');
+        }
+        const isLt2M = file.size / 1024 / 1024 < 5; // Cho phép dưới 5MB
+        if (!isLt2M) {
+            message.error('Ảnh phải nhỏ hơn 5MB!');
+        }
+        return isJpgOrPng && isLt2M;
+    };
+
+    // 5. HÀM XỬ LÝ THAY ĐỔI LIST (Xóa ảnh, Cập nhật trạng thái)
+    const handleChange = (info, type) => {
+        let newFileList = [...info.fileList];
+
+        // Giới hạn chỉ giữ 1 file mới nhất
+        newFileList = newFileList.slice(-1);
+
+        // Nếu upload xong, gán URL thật vào file object để hiển thị preview
+        newFileList = newFileList.map(file => {
+            if (file.response) {
+                file.url = file.response; // response chính là cái URL trả về từ onSuccess
+            }
+            return file;
+        });
+
+        if (type === 'THUMB') {
+            setThumbnailFileList(newFileList);
+            // Nếu xóa hết ảnh -> Xóa value trong form
+            if (newFileList.length === 0) form.setFieldsValue({ anhThumbnail: null });
+        } else {
+            setCoverFileList(newFileList);
+            if (newFileList.length === 0) form.setFieldsValue({ anhBia: null });
+        }
+    };
+
+    // --- CẤU HÌNH PROPS CHO DRAGGER ---
+    // Tạo cấu hình riêng cho từng loại để tái sử dụng code UI
+    const getUploadProps = (type) => ({
+        name: 'file',
+        multiple: false,
+        maxCount: 1,
+        listType: "picture", // Hiển thị dạng danh sách có ảnh nhỏ
+        beforeUpload: beforeUpload,
+        customRequest: (options) => handleCustomUpload(options, type), // Logic upload tùy chỉnh
+        onChange: (info) => handleChange(info, type),
+        fileList: type === 'THUMB' ? thumbnailFileList : coverFileList,
+        onPreview: async (file) => {
+            // Cho phép xem ảnh lớn khi click vào mắt
+            let src = file.url || file.preview;
+            if (!src) {
+                src = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file.originFileObj);
+                    reader.onload = () => resolve(reader.result);
+                });
+            }
+            const image = new Image();
+            image.src = src;
+            const imgWindow = window.open(src);
+            imgWindow?.document.write(image.outerHTML);
+        },
+    });
 
     return (
         <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
@@ -231,23 +338,41 @@ const CreateEventPage = () => {
                                     <TextArea rows={8} placeholder="Nội dung chi tiết sự kiện (Hỗ trợ HTML hoặc Markdown nếu cần)..." />
                                 </Form.Item>
 
-                                {/* Upload Ảnh bìa */}
-                                <Form.Item label="Ảnh bìa ngoài (Card sự kiện)">
-                                    <Dragger {...uploadProps} style={{ background: '#fafafa', borderColor: '#d9d9d9' }}>
+                                {/* Input ẩn để giữ Link ảnh gửi xuống DB */}
+                                <Form.Item name="anhThumbnail" style={{ display: 'none' }}><Input /></Form.Item>
+                                <Form.Item name="anhBia" style={{ display: 'none' }}><Input /></Form.Item>
+
+                                {/* === 1. DRAGGER CHO THUMBNAIL === */}
+                                <Form.Item 
+                                    label="Ảnh bìa ngoài (Card sự kiện)" 
+                                    tooltip="Ảnh hiển thị thu nhỏ ở danh sách sự kiện"
+                                >
+                                    <Dragger 
+                                        {...getUploadProps('THUMB')} // Gọi hàm tạo props
+                                        style={{ background: '#fafafa', borderColor: '#d9d9d9' }}
+                                    >
                                         <p className="ant-upload-drag-icon">
                                             <CloudUploadOutlined style={{ color: '#4096ff' }} />
                                         </p>
                                         <p className="ant-upload-text">Nhấn để tải lên hoặc kéo thả</p>
-                                        <p className="ant-upload-hint">PNG, JPG hoặc GIF</p>
+                                        <p className="ant-upload-hint">Hỗ trợ PNG, JPG, GIF (Max 5MB)</p>
                                     </Dragger>
                                 </Form.Item>
 
-                                {/* Upload 2: Ảnh bìa chi tiết (Cover) */}
-                                <Form.Item label="Ảnh bìa chi tiết (Trong trang sự kiện)">
-                                    <Dragger {...uploadProps} style={{ background: '#fafafa', borderColor: '#d9d9d9' }}>
-                                        <p className="ant-upload-drag-icon"><CloudUploadOutlined style={{ color: '#52c41a' }} /></p>
+                                {/* === 2. DRAGGER CHO COVER === */}
+                                <Form.Item 
+                                    label="Ảnh bìa chi tiết (Trong trang sự kiện)"
+                                    tooltip="Ảnh lớn hiển thị ở đầu trang chi tiết"
+                                >
+                                    <Dragger 
+                                        {...getUploadProps('COVER')} // Gọi hàm tạo props
+                                        style={{ background: '#fafafa', borderColor: '#d9d9d9' }}
+                                    >
+                                        <p className="ant-upload-drag-icon">
+                                            <CloudUploadOutlined style={{ color: '#52c41a' }} />
+                                        </p>
                                         <p className="ant-upload-text">Nhấn để tải lên hoặc kéo thả</p>
-                                        <p className="ant-upload-hint">PNG, JPG hoặc GIF</p>
+                                        <p className="ant-upload-hint">Hỗ trợ PNG, JPG, GIF (Max 5MB)</p>
                                     </Dragger>
                                 </Form.Item>
 
@@ -289,35 +414,75 @@ const CreateEventPage = () => {
                                 </Form.Item>
 
                                 <Space direction="vertical" style={{ width: '100%' }}>
-                                {/* Nút Gửi duyệt -> PENDING */}
-                                <Button 
-                                    type="primary" 
-                                    block 
-                                    icon={<SendOutlined />} 
-                                    loading={loading}
-                                    onClick={() => handleSubmit('PENDING')}
-                                >
-                                    Gửi duyệt
-                                </Button>
-                                
-                                {/* Nút Xem trước -> (Logic cũ giữ nguyên) */}
-                                <Button block icon={<EyeOutlined />} onClick={handlePreview}>
-                                    Xem trước
-                                </Button>
+                                {isEdit ? (
+                                    // ===========================================
+                                    // 🟢 GIAO DIỆN CHỈNH SỬA (EDIT MODE)
+                                    // ===========================================
+                                    <>
+                                        {/* 1. Gửi duyệt (Chuyển sang PENDING) */}
+                                        <Button 
+                                            type="primary" 
+                                            block 
+                                            icon={<SendOutlined />} 
+                                            loading={loading}
+                                            onClick={() => handleSubmit('PENDING')}
+                                        >
+                                            Gửi duyệt lại
+                                        </Button>
 
-                                {/* Nút Lưu nháp -> DRAFT */}
-                                <Button 
-                                    block 
-                                    icon={<SaveOutlined />}
-                                    onClick={() => handleSubmit('DRAFT')}
-                                    loading={loading}
-                                >
-                                    Lưu nháp
-                                </Button>
+                                        {/* 2. Lưu thay đổi (Giữ nguyên trạng thái cũ hoặc mặc định DRAFT) */}
+                                        <Button 
+                                            block 
+                                            icon={<SaveOutlined />} 
+                                            loading={loading}
+                                            onClick={() => handleSubmit(formData?.trangThai || 'DRAFT')}
+                                        >
+                                            Lưu thay đổi (Nháp)
+                                        </Button>
 
-                                <Button type="text" block danger onClick={() => navigate(-1)}>
-                                    Hủy
-                                </Button>
+                                        {/* 3. Xem trước */}
+                                        <Button block icon={<EyeOutlined />} onClick={handlePreview}>
+                                            Xem trước
+                                        </Button>
+
+                                        {/* 4. Huỷ chỉnh sửa */}
+                                        <Button type="text" block danger onClick={() => navigate(-1)}>
+                                            Huỷ chỉnh sửa
+                                        </Button>
+                                    </>
+                                ) : (
+                                    // ===========================================
+                                    // 🔵 GIAO DIỆN TẠO MỚI (CREATE MODE)
+                                    // ===========================================
+                                    <>
+                                        <Button 
+                                            type="primary" 
+                                            block 
+                                            icon={<SendOutlined />} 
+                                            loading={loading}
+                                            onClick={() => handleSubmit('PENDING')}
+                                        >
+                                            Gửi duyệt
+                                        </Button>
+
+                                        <Button 
+                                            block 
+                                            icon={<SaveOutlined />} 
+                                            loading={loading}
+                                            onClick={() => handleSubmit('DRAFT')}
+                                        >
+                                            Lưu nháp
+                                        </Button>
+
+                                        <Button block icon={<EyeOutlined />} onClick={handlePreview}>
+                                            Xem trước
+                                        </Button>
+
+                                        <Button type="text" block danger onClick={() => navigate(-1)}>
+                                            Hủy & Thoát
+                                        </Button>
+                                    </>
+                                )}
                             </Space>
                             </Card>
                         </Col>

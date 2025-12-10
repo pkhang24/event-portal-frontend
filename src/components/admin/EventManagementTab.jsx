@@ -1,11 +1,13 @@
-import { Table, Tag, Button, Space, Popconfirm } from 'antd';
-import { CheckOutlined, DeleteOutlined, UndoOutlined, DeleteFilled } from '@ant-design/icons';
+import { Table, Tag, Button, Space, Tooltip } from 'antd';
+import { CheckOutlined, DeleteOutlined, UndoOutlined, DeleteFilled, CloseOutlined, StopOutlined } from '@ant-design/icons';
 
 const EventManagementTab = ({ 
     events, 
     loading, 
     viewMode = 'list', // 'list' hoặc 'trash'
-    onApprove, 
+    onApprove,
+    onReject,
+    onCancelEvent,
     onDelete, // Xử lý xóa mềm hoặc xóa cứng tùy viewMode
     onRestore // Xử lý khôi phục
 }) => {
@@ -16,32 +18,54 @@ const EventManagementTab = ({
         { title: 'Người tạo', dataIndex: 'tenNguoiDang', key: 'tenNguoiDang' },
         {
             title: 'Trạng thái', dataIndex: 'trangThai', key: 'trangThai',
-            render: (status) => (
-                <Tag color={status === 'PUBLISHED' ? 'green' : 'orange'}>
-                    {status === 'PUBLISHED' ? 'Đã duyệt' : 'Chờ duyệt'}
-                </Tag>
-            )
+            render: (status) => {
+                if (status === 'PUBLISHED') return <Tag color="green">Đã duyệt</Tag>;
+                if (status === 'PENDING') return <Tag color="orange">Chờ duyệt</Tag>;
+                if (status === 'DRAFT') return <Tag color="default">Bản nháp</Tag>;
+                if (status === 'CANCELLED') return <Tag color="red">Đã hủy</Tag>;
+                return <Tag>{status}</Tag>;
+            }
         },
         {
             title: 'Hành động', 
             key: 'action',
-            width: 180,       // Đặt chiều rộng cố định đủ cho các nút
-            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            width: 200, 
             align: 'center',
             render: (_, record) => (
-                <Space size="large">
-                    {record.trangThai === 'DRAFT' && (
-                        <Button type="primary" size="medium" icon={<CheckOutlined />} onClick={() => onApprove(record.id)}>
-                            Duyệt
+                <Space>
+                    {/* NÚT DUYỆT (Giữ nguyên) */}
+                    {record.trangThai === 'PENDING' && (
+                        <Tooltip title="Duyệt đăng">
+                            <Button type="primary" size="small" icon={<CheckOutlined />} onClick={() => onApprove(record.id)}>
+                                Duyệt
+                            </Button>
+                        </Tooltip>
+                    )}
+
+                    {/* NÚT TỪ CHỐI (Bỏ Popconfirm -> Gọi trực tiếp để mở Modal) */}
+                    {record.trangThai === 'PENDING' && (
+                        <Button 
+                            size="small" 
+                            danger 
+                            icon={<CloseOutlined />} 
+                            onClick={() => onReject(record.id)} // <--- Sửa dòng này
+                        >
+                            Từ chối
                         </Button>
                     )}
-                    <Popconfirm
-                        title="Chuyển vào thùng rác?"
-                        onConfirm={() => onDelete(record.id)}
-                        okText="Xóa" cancelText="Hủy"
-                    >
-                        <Button size="medium" danger icon={<DeleteOutlined />}>Xóa</Button>
-                    </Popconfirm>
+
+                    {/* NÚT HỦY (Bỏ Popconfirm -> Gọi trực tiếp để mở Modal) */}
+                    {record.trangThai === 'PUBLISHED' && (
+                        <Button 
+                            type="primary" 
+                            danger 
+                            size="small" 
+                            icon={<StopOutlined />} 
+                            onClick={() => onCancelEvent(record.id)} // <--- Sửa dòng này
+                        >
+                            Hủy
+                        </Button>
+                    )}
                 </Space>
             )
         },

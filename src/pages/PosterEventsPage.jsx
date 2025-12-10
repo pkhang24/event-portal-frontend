@@ -87,14 +87,18 @@ const PosterEventsPage = () => {
 
     // 3. Xem trước
     const handlePreview = (record) => {
-        const previewData = {
-            ...record,
-            tenNguoiDang: record.nguoiDang?.hoTen || 'Bạn',
-            tenDanhMuc: record.category?.tenDanhMuc || 'Danh mục',
-            isPreview: true 
-        };
-        navigate('/events/preview', { state: { previewData, source: 'list' } });
+    const previewData = {
+        ...record,
+        // Backend trả về thẳng 'tenNguoiDang' và 'tenDanhMuc', không cần chọc sâu vào object
+        tenNguoiDang: record.tenNguoiDang || record.nguoiDang?.hoTen || 'Bạn',
+        
+        // Ưu tiên lấy record.tenDanhMuc (từ API), nếu không có mới tìm trong object (dự phòng)
+        tenDanhMuc: record.tenDanhMuc || record.category?.tenDanhMuc || 'Chưa phân loại',
+        
+        isPreview: true 
     };
+    navigate('/events/preview', { state: { previewData, source: 'list' } });
+};
 
     // --- SỬA HÀM XÓA MỀM ---
     const handleDeleteEvent = async (id) => {
@@ -238,8 +242,13 @@ const PosterEventsPage = () => {
                         <>
                             <Tooltip title="Xem trước"><Button size="medium" icon={<EyeOutlined />} onClick={() => handlePreview(record)} /></Tooltip>
                             
-                            <Tooltip title="Sửa">
-                                <Button size="medium" icon={<EditOutlined />} onClick={() => handleEdit(record)} disabled={record.trangThai === 'PUBLISHED'} />
+                            <Tooltip title={record.trangThai === 'CANCELLED' ? "Sự kiện đã bị hủy (Không thể sửa)" : "Sửa"}>
+                                <Button 
+                                    size="medium" icon={<EditOutlined />} 
+                                    onClick={() => handleEdit(record)} 
+                                    // VÔ HIỆU HÓA NẾU BỊ HỦY
+                                    disabled={record.trangThai === 'PUBLISHED' || record.trangThai === 'CANCELLED'} 
+                                />
                             </Tooltip>
                             
                             {/* Nút Xóa Mềm (Có Popconfirm) */}

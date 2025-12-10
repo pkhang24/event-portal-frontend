@@ -18,7 +18,6 @@ const AdminBannersPage = () => {
         setLoading(true);
         try {
             const data = view === 'list' ? await getAllBanners() : await getDeletedBanners();
-            console.log("Dữ liệu tải về:", data);
             setBanners(data);
         } catch (err) { message.error("Lỗi tải banner"); }
         finally { setLoading(false); }
@@ -26,14 +25,33 @@ const AdminBannersPage = () => {
 
     useEffect(() => { fetchBanners(); }, [view]);
 
+    // --- HÀM SAVE ĐÃ SỬA ĐỔI ĐỂ HỖ TRỢ UPLOAD ---
     const handleSave = async (id, values) => {
         try {
-            if (id) await updateBanner(id, values);
-            else await createBanner(values);
-            message.success("Thành công");
+            // Tạo FormData để gửi file
+            const formData = new FormData();
+            formData.append('active', values.active ? '1' : '0'); // Hoặc 'true'/'false' tùy backend
+            
+            // Nếu có file ảnh mới thì append vào
+            if (values.imageFile) {
+                formData.append('image', values.imageFile);
+            }
+
+            if (id) {
+                // Cập nhật
+                await updateBanner(id, formData);
+            } else {
+                // Thêm mới
+                await createBanner(formData);
+            }
+
+            message.success(id ? "Cập nhật thành công" : "Thêm mới thành công");
             fetchBanners();
             refreshBanners(); // Cập nhật banner trang chủ
-        } catch (err) { message.error("Thất bại"); }
+        } catch (err) { 
+            console.error(err);
+            message.error("Thất bại. Vui lòng kiểm tra lại server."); 
+        }
     };
 
     const handleDelete = async (id) => {
@@ -46,7 +64,7 @@ const AdminBannersPage = () => {
                 message.success("Đã xóa vĩnh viễn");
             }
             fetchBanners();
-            refreshBanners(); // Cập nhật banner trang chủ
+            refreshBanners();
         } catch (err) { message.error("Thất bại"); }
     };
 
