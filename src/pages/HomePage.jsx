@@ -19,6 +19,7 @@ const localizer = momentLocalizer(moment);
 const { Content } = Layout;
 const { Title, Paragraph, Text } = Typography;
 const { Meta } = Card;
+const BE_URL = "http://localhost:8080/uploads";
 
 // --- 1. COMPONENT TIÊU ĐỀ MỚI (STYLE HIỆN ĐẠI) ---
 const SectionTitle = ({ title, icon, color }) => (
@@ -155,14 +156,19 @@ export const CardComponent = ({ event }) => {
                 <div style={{ height: '180px', overflow: 'hidden', position: 'relative' }}>
                     <img 
                         alt={event.tieuDe} 
-                        src={event.anhThumbnail || "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"}
-                        className="event-card-img" // Giữ class để zoom ảnh
+                        src={
+                            event.anhThumbnail 
+                            ? (event.anhThumbnail.startsWith('http') ? event.anhThumbnail : `${BE_URL}/${event.anhThumbnail}`)
+                            : "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
+                        }
+                        className="event-card-img"
                         style={{ 
                             height: '100%', 
                             width: '100%', 
                             objectFit: 'cover', 
                             display: 'block'
                         }} 
+                        onError={(e) => { e.target.src = "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png" }}
                     />
                     {/* Nhãn trạng thái (Đè lên ảnh) */}
                     {isEnded && (
@@ -402,7 +408,11 @@ const HomePage = () => {
                                     {banners.map((banner) => (
                                         <div key={banner.id} className="home-banner-item">
                                             <img 
-                                                src={banner.imageUrl} 
+                                                src={
+                                                    banner.imageUrl 
+                                                    ? (banner.imageUrl.startsWith('http') ? banner.imageUrl : `${BE_URL}/${banner.imageUrl}`)
+                                                    : "https://placehold.co/800x500/1e293b/ffffff?text=Event"
+                                                }
                                                 alt="Event Banner" 
                                                 className="home-banner-img"
                                                 onError={(e) => {e.target.src = "https://placehold.co/800x500/1e293b/ffffff?text=Event"}}

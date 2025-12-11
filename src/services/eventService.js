@@ -40,19 +40,25 @@ export const getCategories = async () => {
     return response.data;
 };
 
-// Tạo sự kiện mới
-export const createEvent = async (eventData) => {
-    const response = await api.post('/events', eventData);
+export const createEvent = async (formData) => {
+    // Lưu ý: formData phải là instance của FormData, không phải object {}
+    const response = await api.post('/events', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
     return response.data;
 };
 
-// Cập nhật sự kiện
-export const updateEvent = async (id, eventData) => {
-    const response = await api.put(`/events/${id}`, eventData);
+// Làm tương tự cho hàm updateEvent nếu có
+export const updateEvent = async (id, formData) => {
+    const response = await api.put(`/events/${id}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
     return response.data;
 };
-
-// ... các hàm cũ giữ nguyên
 
 // Xóa mềm (Gọi API DELETE thường -> Backend @SQLDelete tự xử lý)
 export const softDeleteEvent = async (eventId) => {

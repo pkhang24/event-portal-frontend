@@ -29,6 +29,7 @@ const EventDetailPage = () => {
     const [registering, setRegistering] = useState(false);
     const [error, setError] = useState(null);
     const user = getCurrentUser();
+    const BE_URL = "http://localhost:8080/uploads";
     const isPreviewMode = id === 'preview' || location.state?.previewData;
 
     useEffect(() => {
@@ -145,7 +146,13 @@ const EventDetailPage = () => {
                 }}>
                      <img
                         alt={event.tieuDe}
-                        src={event.anhThumbnail || fallbackImage}
+                        // Logic: Nếu link bắt đầu bằng http (link mạng) thì giữ nguyên
+                        // Nếu không thì ghép domain backend vào
+                        src={
+                            event.anhThumbnail 
+                            ? (event.anhThumbnail.startsWith('http') ? event.anhThumbnail : `${BE_URL}/${event.anhThumbnail}`) 
+                            : fallbackImage
+                        }
                         onError={(e) => { e.target.src = fallbackImage; }} 
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
