@@ -26,17 +26,10 @@ const AdminBannersPage = () => {
     useEffect(() => { fetchBanners(); }, [view]);
 
     // --- HÀM SAVE ĐÃ SỬA ĐỔI ĐỂ HỖ TRỢ UPLOAD ---
-    const handleSave = async (id, values) => {
+    const handleSave = async (id, formData) => { // Tham số thứ 2 là formData đã đóng gói từ con
         try {
-            // Tạo FormData để gửi file
-            const formData = new FormData();
-            formData.append('active', values.active ? '1' : '0'); // Hoặc 'true'/'false' tùy backend
+            // Không cần new FormData() nữa vì bên con đã làm rồi
             
-            // Nếu có file ảnh mới thì append vào
-            if (values.imageFile) {
-                formData.append('image', values.imageFile);
-            }
-
             if (id) {
                 // Cập nhật
                 await updateBanner(id, formData);
@@ -47,7 +40,7 @@ const AdminBannersPage = () => {
 
             message.success(id ? "Cập nhật thành công" : "Thêm mới thành công");
             fetchBanners();
-            refreshBanners(); // Cập nhật banner trang chủ
+            refreshBanners(); 
         } catch (err) { 
             console.error(err);
             message.error("Thất bại. Vui lòng kiểm tra lại server."); 

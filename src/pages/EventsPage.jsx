@@ -54,9 +54,18 @@ const EventsPage = () => {
         if (searchText) {
             result = result.filter(e => e.tieuDe.toLowerCase().includes(searchText.toLowerCase()));
         }
+
+        // SỬA ĐOẠN NÀY
         if (filterCategory !== 'all') {
-            result = result.filter(e => e.category && e.category.id === filterCategory);
+            result = result.filter(e => {
+                // Lấy ID từ categoryId (phẳng) hoặc category.id (lồng nhau) để an toàn
+                const eventCatId = e.categoryId || (e.category ? e.category.id : null);
+                
+                // So sánh chuỗi để tránh lệch kiểu number/string
+                return String(eventCatId) === String(filterCategory);
+            });
         }
+        
         if (filterStatus === 'ongoing') {
             result = result.filter(e => new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now);
         } else if (filterStatus === 'upcoming') {

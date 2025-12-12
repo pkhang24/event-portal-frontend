@@ -126,21 +126,29 @@ export const softDeleteCategory = (id) => {
     return api.delete(`/admin/categories/${id}`);
 };
 
-// === API CHO BANNER ===
+/// API Banner (Viết lại chuẩn)
 export const getAllBanners = async () => {
-    const response = await api.get('/admin/banners');
+    // Không cần /api ở đầu vì api instance đã có baseURL là /api rồi (hoặc proxy đã xử lý)
+    const response = await api.get('/banners'); 
     return response.data;
 };
+
 export const createBanner = (formData) => {
-    return axios.post('/api/banners', formData, {
+    // Chỉ cần gửi FormData, api instance tự lo Token
+    // Header Content-Type: multipart/form-data sẽ được axios tự động set khi thấy FormData
+    return api.post('/banners', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 };
-export const updateBanner = (id, bannerData) => {
-    return api.put(`/admin/banners/${id}`, bannerData);
+
+export const updateBanner = (id, formData) => {
+    return api.put(`/banners/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
 };
+
 export const softDeleteBanner = (id) => {
-    return api.delete(`/admin/banners/${id}`);
+    return api.delete(`/banners/${id}`); // Sửa path cho khớp controller
 };
 
 // --- User Trash ---
@@ -169,8 +177,8 @@ export const permanentDeleteCategory = (id) => api.delete(`/admin/categories/tra
 
 // --- Banner Trash ---
 export const getDeletedBanners = async () => {
-    const response = await api.get('/admin/banners/trash');
+    const response = await api.get('/banners/trash');
     return response.data;
 };
-export const restoreBanner = (id) => api.put(`/admin/banners/trash/restore/${id}`);
-export const permanentDeleteBanner = async (id) => api.delete(`/admin/banners/trash/hard-delete/${id}`);
+export const restoreBanner = (id) => api.put(`/banners/trash/restore/${id}`);
+export const permanentDeleteBanner = async (id) => api.delete(`/banners/trash/hard-delete/${id}`);

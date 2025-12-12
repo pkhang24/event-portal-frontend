@@ -1,18 +1,18 @@
-import { Table, Tag, Button, Space, Tooltip } from 'antd';
-import { CheckOutlined, DeleteOutlined, UndoOutlined, DeleteFilled, CloseOutlined, StopOutlined } from '@ant-design/icons';
+import { Table, Tag, Button, Space, Tooltip, Popconfirm } from 'antd'; // Nhớ import Popconfirm
+import { CheckOutlined, DeleteFilled, CloseOutlined, StopOutlined, UndoOutlined, EyeOutlined } from '@ant-design/icons'; // Thêm EyeOutlined
 
 const EventManagementTab = ({ 
     events, 
     loading, 
-    viewMode = 'list', // 'list' hoặc 'trash'
+    viewMode = 'list', 
     onApprove,
     onReject,
     onCancelEvent,
-    onDelete, // Xử lý xóa mềm hoặc xóa cứng tùy viewMode
-    onRestore // Xử lý khôi phục
+    onDelete, 
+    onRestore,
+    onPreview // <--- 1. NHẬN THÊM HÀM NÀY
 }) => {
 
-    // Cột cho Danh sách chính
     const listColumns = [
         { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'tieuDe', width: '30%' },
         { title: 'Người tạo', dataIndex: 'tenNguoiDang', key: 'tenNguoiDang' },
@@ -29,39 +29,48 @@ const EventManagementTab = ({
         {
             title: 'Hành động', 
             key: 'action',
-            width: 200, 
+            width: 250, // Tăng chiều rộng chút để đủ chỗ
             align: 'center',
             render: (_, record) => (
                 <Space>
-                    {/* NÚT DUYỆT (Giữ nguyên) */}
+                    {/* --- 2. THÊM NÚT XEM TRƯỚC --- */}
+                    <Tooltip title="Xem chi tiết">
+                        <Button 
+                            icon={<EyeOutlined />} 
+                            onClick={() => onPreview(record)} 
+                        >
+                            Xem
+                        </Button>
+                    </Tooltip>
+
+                    {/* NÚT DUYỆT */}
                     {record.trangThai === 'PENDING' && (
                         <Tooltip title="Duyệt đăng">
-                            <Button type="primary" size="small" icon={<CheckOutlined />} onClick={() => onApprove(record.id)}>
+                            <Button type="primary" icon={<CheckOutlined />} onClick={() => onApprove(record.id)}>
                                 Duyệt
                             </Button>
                         </Tooltip>
                     )}
 
-                    {/* NÚT TỪ CHỐI (Bỏ Popconfirm -> Gọi trực tiếp để mở Modal) */}
+                    {/* NÚT TỪ CHỐI */}
                     {record.trangThai === 'PENDING' && (
                         <Button 
-                            size="small" 
                             danger 
                             icon={<CloseOutlined />} 
-                            onClick={() => onReject(record.id)} // <--- Sửa dòng này
+                            onClick={() => onReject(record.id)}
                         >
                             Từ chối
                         </Button>
                     )}
 
-                    {/* NÚT HỦY (Bỏ Popconfirm -> Gọi trực tiếp để mở Modal) */}
+                    {/* NÚT HỦY */}
                     {record.trangThai === 'PUBLISHED' && (
                         <Button 
                             type="primary" 
                             danger 
                             size="small" 
                             icon={<StopOutlined />} 
-                            onClick={() => onCancelEvent(record.id)} // <--- Sửa dòng này
+                            onClick={() => onCancelEvent(record.id)}
                         >
                             Hủy
                         </Button>
@@ -71,19 +80,19 @@ const EventManagementTab = ({
         },
     ];
 
-    // Cột cho Thùng rác
+    // Cột cho Thùng rác (Giữ nguyên, không cần nút xem)
     const trashColumns = [
         { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'tieuDe', width: '30%' },
         { title: 'Người tạo', dataIndex: 'tenNguoiDang', key: 'tenNguoiDang' },
         {
             title: 'Hành động', 
             key: 'action',
-            width: 100,       // Đặt chiều rộng cố định đủ cho các nút
-            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            width: 180, 
+            fixed: 'right', 
             align: 'center',
             render: (_, record) => (
-                <Space size="large">
-                    <Button type="primary" ghost size="medium" icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>
+                <Space size="small">
+                    <Button type="primary" ghost size="small" icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>
                         Khôi phục
                     </Button>
                     <Popconfirm
@@ -92,7 +101,7 @@ const EventManagementTab = ({
                         onConfirm={() => onDelete(record.id)}
                         okText="Xóa vĩnh viễn" cancelText="Hủy"
                     >
-                        <Button size="medium" danger icon={<DeleteFilled />}>Xóa vĩnh viễn</Button>
+                        <Button size="small" danger icon={<DeleteFilled />}>Xóa</Button>
                     </Popconfirm>
                 </Space>
             )
@@ -106,7 +115,6 @@ const EventManagementTab = ({
             rowKey="id" 
             loading={loading} 
             pagination={{ pageSize: 8 }}
-            // scroll={{ x: 1000 }}
         />
     );
 };

@@ -173,12 +173,17 @@ export const CardComponent = ({ event }) => {
                     {/* Nhãn trạng thái (Đè lên ảnh) */}
                     {isEnded && (
                         <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 'bold', backdropFilter: 'blur(4px)' }}>
-                            KẾT THÚC
+                            ĐÃ KẾT THÚC
                         </div>
                     )}
                     {isOngoing && (
                         <div style={{ position: 'absolute', top: 12, right: 12, background: '#ff4d4f', color: '#fff', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 'bold', boxShadow: '0 2px 8px rgba(255,77,79,0.3)' }}>
                             ĐANG DIỄN RA
+                        </div>
+                    )}
+                    {isUpcoming && (
+                        <div style={{ position: 'absolute', top: 12, right: 12, background: '#1677ff', color: '#fff', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 'bold', boxShadow: '0 2px 8px rgba(255,77,79,0.3)' }}>
+                            SẮP DIỄN RA
                         </div>
                     )}
                 </div>
@@ -359,12 +364,22 @@ const HomePage = () => {
     }, []);
 
     useEffect(() => {
+        if (sourceEvents.length > 0) {
+        console.log("Cấu trúc sự kiện:", sourceEvents[0]);
+    }
         if (filterCategory === 'all_cat') {
             setDisplayedEvents(sourceEvents);
         } else {
-            setDisplayedEvents(sourceEvents.filter(e => e.category && e.category.id === filterCategory));
+            setDisplayedEvents(sourceEvents.filter(e => {
+                // Lấy ID danh mục từ sự kiện (Kiểm tra cả 2 trường hợp: phẳng hoặc lồng nhau)
+                // Backend của bạn trả về 'categoryId', nhưng đề phòng tương lai bạn sửa lại
+                const eventCatId = e.categoryId || (e.category ? e.category.id : null);
+                
+                // So sánh (chuyển về chuỗi để tránh lệch kiểu number/string)
+                return String(eventCatId) === String(filterCategory);
+            }));
         }
-    }, [filterCategory, sourceEvents]); 
+    }, [filterCategory, sourceEvents]);
 
     useEffect(() => {
         if (banners.length > 0) {

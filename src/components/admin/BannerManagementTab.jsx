@@ -1,37 +1,36 @@
 import { Table, Button, Space, Popconfirm, Modal, Form, Switch, Image, Upload, message } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, UndoOutlined, DeleteFilled, UploadOutlined } from '@ant-design/icons';
-import { useState, useEffect } from 'react';
+import { EditOutlined, DeleteOutlined, PlusOutlined, UndoOutlined, DeleteFilled } from '@ant-design/icons'; // Thêm icon cho Trash
+import { useState } from 'react';
 
 const BannerManagementTab = ({ banners, loading, viewMode = 'list', onSave, onDelete, onRestore }) => {
     const [form] = Form.useForm();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingBanner, setEditingBanner] = useState(null);
-    const [fileList, setFileList] = useState([]); // State quản lý danh sách ảnh trong Modal
+    const [fileList, setFileList] = useState([]); 
 
-    // Hàm chuẩn hóa dữ liệu file cho Antd Upload
-    const normFile = (e) => {
-        if (Array.isArray(e)) return e;
-        return e?.fileList;
+    const BE_URL = "http://localhost:8080/uploads"; 
+
+    // ... (Giữ nguyên các hàm showModal, handleCancel, renderImage, handleFinish, handleUploadChange của bạn) ...
+    // Code của bạn ở phần này đã chuẩn rồi, không cần sửa lại logic FormData nữa.
+    
+    // Hàm render ảnh (Copy lại từ code bạn để dùng chung)
+    const renderImage = (imgName) => {
+        if (!imgName) return "https://placehold.co/1200x400?text=No+Image";
+        if (imgName.startsWith('http')) return imgName;
+        return `${BE_URL}/${imgName}`;
     };
 
     const showModal = (banner = null) => {
         setEditingBanner(banner);
-        
         if (banner) {
-            // Nếu là Sửa: Set giá trị form và hiển thị ảnh cũ
-            form.setFieldsValue({
-                active: banner.active,
-                // Không set field 'image' trực tiếp vì Upload quản lý qua fileList
-            });
-            // Tạo mock file để hiển thị ảnh hiện tại
+            form.setFieldsValue({ active: banner.active });
             setFileList([{
                 uid: '-1',
-                name: 'image.png',
+                name: 'banner.png',
                 status: 'done',
-                url: banner.imageUrl,
+                url: renderImage(banner.imageUrl),
             }]);
         } else {
-            // Nếu là Thêm mới
             form.setFieldsValue({ active: true });
             setFileList([]);
         }
@@ -45,74 +44,55 @@ const BannerManagementTab = ({ banners, loading, viewMode = 'list', onSave, onDe
     };
 
     const handleFinish = (values) => {
-        // Xử lý file ảnh trước khi gửi ra ngoài
-        let imageFile = null;
-        
-        // Kiểm tra xem có file mới được upload không
-        if (values.upload && values.upload.length > 0) {
-            const fileObj = values.upload[0];
-            if (fileObj.originFileObj) {
-                imageFile = fileObj.originFileObj; // Lấy file thực tế
-            }
-        }
-
-        // Kiểm tra validation: Nếu thêm mới mà chưa chọn ảnh
-        if (!editingBanner && !imageFile) {
+        const formData = new FormData();
+        formData.append('active', values.active);
+        if (fileList.length > 0 && fileList[0].originFileObj) {
+            formData.append('image', fileList[0].originFileObj);
+        } else if (!editingBanner) {
             message.error("Vui lòng chọn hình ảnh!");
             return;
         }
-
-        // Gửi dữ liệu ra component cha
-        // Nếu imageFile là null (tức là không đổi ảnh khi sửa), bên cha sẽ tự xử lý giữ nguyên ảnh cũ
-        onSave(editingBanner ? editingBanner.id : null, {
-            active: values.active,
-            imageFile: imageFile 
-        });
-
+        onSave(editingBanner ? editingBanner.id : null, formData);
         setIsModalVisible(false);
         setFileList([]);
         form.resetFields();
     };
 
-    const handleUploadChange = ({ fileList: newFileList }) => {
-        setFileList(newFileList);
-    };
+    const handleUploadChange = ({ fileList: newFileList }) => setFileList(newFileList.slice(-1));
 
-    // Columns List
+    // --- 1. CỘT CHO DANH SÁCH (LIST) ---
     const listColumns = [
-        { title: 'Ảnh', dataIndex: 'imageUrl', key: 'imageUrl', render: (url) => <Image src={url} width={120} height={60} style={{objectFit: 'cover'}} /> },
+        { 
+            title: 'Ảnh', dataIndex: 'imageUrl', key: 'imageUrl', 
+            render: (url) => <Image src={renderImage(url)} width={120} height={60} style={{objectFit: 'cover'}} /> 
+        },
         { title: 'Trạng thái', dataIndex: 'active', key: 'active', render: (active) => <Switch checked={active} disabled /> },
         {
-            title: 'Hành động', 
-            key: 'action', 
-            width: 180,
-            fixed: 'right',
-            align: 'center',
+            title: 'Hành động', key: 'action', width: 150, align: 'center',
             render: (_, record) => (
-                <Space size="middle">
-                    <Button size="middle" icon={<EditOutlined />} onClick={() => showModal(record)}>Sửa</Button>
-                    <Popconfirm title="Xóa?" onConfirm={() => onDelete(record.id)}>
-                        <Button size="middle" danger icon={<DeleteOutlined />}>Xóa</Button>
+                <Space>
+                    <Button icon={<EditOutlined />} onClick={() => showModal(record)} />
+                    <Popconfirm title="Xoá ảnh này?" description="Ảnh sẽ được chuyển vào thùng rác!" onConfirm={() => onDelete(record.id)}>
+                        <Button danger icon={<DeleteOutlined />} />
                     </Popconfirm>
                 </Space>
             )
         }
     ];
 
-    // Columns Trash
+    // --- 2. CỘT CHO THÙNG RÁC (TRASH) - BẠN ĐANG THIẾU PHẦN NÀY ---
     const trashColumns = [
-        { title: 'Ảnh', dataIndex: 'imageUrl', key: 'imageUrl', render: (url) => <Image src={url} width={120} /> },
+        { 
+            title: 'Ảnh', dataIndex: 'imageUrl', key: 'imageUrl', 
+            render: (url) => <Image src={renderImage(url)} width={120} height={60} style={{objectFit: 'cover', opacity: 0.5}} /> 
+        },
         {
-            title: 'Hành động', 
-            key: 'action', 
-            width: 180,
-            fixed: 'right',
-            align: 'center',
+            title: 'Hành động', key: 'action', width: 180, align: 'center',
             render: (_, record) => (
-                <Space size="middle">
-                    <Button size="middle" type="primary" ghost icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>Khôi phục</Button>
-                    <Popconfirm title="Xóa VĨNH VIỄN?" onConfirm={() => onDelete(record.id)}>
-                        <Button size="middle" danger icon={<DeleteFilled />}>Xóa</Button>
+                <Space>
+                    <Button type="primary" ghost icon={<UndoOutlined />} onClick={() => onRestore(record.id)}>Khôi phục</Button>
+                    <Popconfirm title="Xóa vĩnh viễn?" description="Không thể hoàn tác!" onConfirm={() => onDelete(record.id)}>
+                        <Button danger icon={<DeleteFilled />} />
                     </Popconfirm>
                 </Space>
             )
@@ -126,45 +106,24 @@ const BannerManagementTab = ({ banners, loading, viewMode = 'list', onSave, onDe
                     Thêm Banner
                 </Button>
             )}
+            
+            {/* --- 3. SỬA LẠI CHỖ NÀY ĐỂ CHUYỂN CỘT KHI ĐỔI TAB --- */}
             <Table 
-                dataSource={Array.isArray(banners) ? banners : []} 
+                dataSource={banners} 
                 columns={viewMode === 'list' ? listColumns : trashColumns} 
-                rowKey="id" loading={loading} pagination={{ pageSize: 5 }}
+                rowKey="id" 
+                loading={loading} 
+                pagination={{ pageSize: 5 }} 
             />
             
-            <Modal 
-                title={editingBanner ? "Sửa Banner" : "Thêm Banner"} 
-                open={isModalVisible} 
-                onCancel={handleCancel} 
-                onOk={() => form.submit()}
-            >
+            <Modal title={editingBanner ? "Sửa Banner" : "Thêm Banner"} open={isModalVisible} onCancel={handleCancel} onOk={() => form.submit()} destroyOnClose>
                 <Form form={form} layout="vertical" onFinish={handleFinish}>
-                    <Form.Item 
-                        name="upload" 
-                        label="Hình ảnh" 
-                        valuePropName="fileList" 
-                        getValueFromEvent={normFile}
-                    >
-                        <Upload 
-                            listType="picture-card" 
-                            maxCount={1} 
-                            fileList={fileList}
-                            onChange={handleUploadChange}
-                            beforeUpload={() => false} // Quan trọng: Chặn upload tự động để xử lý thủ công
-                            accept="image/*"
-                        >
-                            {fileList.length < 1 && (
-                                <div>
-                                    <PlusOutlined />
-                                    <div style={{ marginTop: 8 }}>Chọn ảnh</div>
-                                </div>
-                            )}
+                    <Form.Item label="Hình ảnh" required={!editingBanner}>
+                        <Upload listType="picture-card" maxCount={1} fileList={fileList} onChange={handleUploadChange} beforeUpload={() => false} accept="image/*">
+                            {fileList.length < 1 && <div><PlusOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>}
                         </Upload>
                     </Form.Item>
-
-                    <Form.Item name="active" label="Trạng thái hiển thị" valuePropName="checked">
-                        <Switch checkedChildren="Hiện" unCheckedChildren="Ẩn" />
-                    </Form.Item>
+                    <Form.Item name="active" label="Hiển thị" valuePropName="checked"><Switch /></Form.Item>
                 </Form>
             </Modal>
         </>
