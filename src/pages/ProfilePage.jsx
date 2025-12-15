@@ -144,7 +144,7 @@ const ProfilePage = () => {
                                     <Form form={form} layout="vertical" onFinish={onFinishInfo}>
                                         <Form.Item
                                             name="email"
-                                            label="Email"
+                                            label="Email (Dùng để đăng nhập)"
                                             rules={[{ required: true, type: 'email' }]}
                                         >
                                             <Input prefix={<MailOutlined />} />

@@ -220,13 +220,11 @@ const PosterEventsPage = () => {
             render: (_, record) => (
                 <Space size="middle">
                     {activeTab === 'TRASH' ? (
+                        // ... (Phần nút bấm cho thùng rác giữ nguyên) ...
                         <>
-                            {/* Nút Khôi phục */}
-                            <Tooltip title="Khôi phục">
+                           <Tooltip title="Khôi phục">
                                 <Button type="primary" ghost size="medium" icon={<UndoOutlined />} onClick={() => handleRestore(record.id)} />
                             </Tooltip>
-                            
-                            {/* Nút Xóa Vĩnh Viễn (Có Popconfirm) */}
                             <Popconfirm
                                 title="Xóa vĩnh viễn?"
                                 description="Hành động này không thể hoàn tác!"
@@ -242,17 +240,18 @@ const PosterEventsPage = () => {
                         <>
                             <Tooltip title="Xem trước"><Button size="medium" icon={<EyeOutlined />} onClick={() => handlePreview(record)} /></Tooltip>
                             
+                            {/* Nút Sửa: Ẩn hoặc Disable nếu đã bị Hủy */}
                             <Tooltip title={record.trangThai === 'CANCELLED' ? "Sự kiện đã bị hủy (Không thể sửa)" : "Sửa"}>
                                 <Button 
                                     size="medium" icon={<EditOutlined />} 
                                     onClick={() => handleEdit(record)} 
-                                    // VÔ HIỆU HÓA NẾU BỊ HỦY
-                                    disabled={record.trangThai === 'PUBLISHED' || record.trangThai === 'CANCELLED'} 
+                                    // Disable nút sửa nếu đã bị Hủy
+                                    disabled={record.trangThai === 'CANCELLED' || record.trangThai === 'PUBLISHED'} 
                                 />
                             </Tooltip>
                             
-                            {/* Nút Xóa Mềm (Có Popconfirm) */}
-                            <Tooltip title="Xóa">
+                            {/* Nút Xóa Mềm: Luôn hiện để Poster có thể dọn dẹp vào thùng rác */}
+                            <Tooltip title="Chuyển vào thùng rác">
                                 <Popconfirm
                                     title="Chuyển vào thùng rác?"
                                     description="Bạn có thể khôi phục lại sau."
@@ -323,6 +322,15 @@ const PosterEventsPage = () => {
                 <Space>
                     Đã công khai
                     <Badge count={getCount('PUBLISHED')} showZero color="#52c41a" />
+                </Space>
+            ) 
+        },
+        { 
+            key: 'CANCELLED', 
+            label: (
+                <Space>
+                    Đã hủy
+                    <Badge count={getCount('CANCELLED')} showZero color="#ff4d4f" />
                 </Space>
             ) 
         },
