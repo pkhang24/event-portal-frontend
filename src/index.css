@@ -83,7 +83,7 @@ html, body {
 .home-banner-carousel .slick-slide,
 .home-banner-carousel .slick-slide > div {
     height: '1200px' !important;
-    display: flex !important; /* Giúp căn chỉnh */
+    /* display: flex !important; */
 }
 
 /* Ép chiều rộng để không bị bóp méo khi chuyển trang */
@@ -116,7 +116,7 @@ html, body {
    ========================================= */
 .event-card {
   transition: all 0.3s ease !important;
-  border: none !important;
+  /* border: none !important; */
   border-radius: 16px !important;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);

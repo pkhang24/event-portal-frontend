@@ -90,15 +90,61 @@ const EventDetailPage = () => {
     const isEnded = endTime < now;      // Đã kết thúc
     const isOngoing = startTime <= now && endTime >= now; // Đang diễn ra
 
+    // Định nghĩa CSS để fix lỗi khoảng cách và ảnh to
+    const eventContentStyle = `
+        /* Class bao quanh nội dung */
+        .event-content-view {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #334155;
+            overflow-wrap: break-word;
+        }
+
+        /* 1. Fix lỗi Enter bị xa (khoảng cách dòng) */
+        .event-content-view p {
+            margin-bottom: 0px !important;
+            margin-top: 0px !important;
+            padding: 0 !important;
+            line-height: 1.5 !important;
+        }
+
+        /* 2. Fix lỗi danh sách */
+        .event-content-view ul, .event-content-view ol {
+            margin: 0 !important;
+            padding-left: 1.5em !important;
+        }
+        .event-content-view li {
+            margin-bottom: 0 !important;
+        }
+
+        /* 3. Fix lỗi ẢNH BỊ TRÀN (Quan trọng) */
+        .event-content-view img {
+            max-width: 100% !important; /* Ảnh không bao giờ to hơn khung */
+            height: auto !important;    /* Giữ tỷ lệ ảnh */
+            display: block;
+            margin: 15px auto;          /* Căn giữa */
+            border-radius: 8px;
+        }
+        
+        /* Style cho tiêu đề trong bài viết (nếu có) */
+        .event-content-view h1, .event-content-view h2, .event-content-view h3 {
+            margin-top: 15px;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+    `;
+
     return (
         <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}> 
+            <style>{eventContentStyle}</style>
             <MyNavbar />
 
             {/* === THÊM THANH CẢNH BÁO NẾU ĐANG XEM TRƯỚC === */}
             {isPreviewMode && (
                 <Alert 
                     message="Chế độ Xem trước" 
-                    description="Đây là hình ảnh hiển thị của sự kiện. Dữ liệu chưa được lưu vào hệ thống." 
+                    description="Đây là hình ảnh hiển thị của sự kiện." 
                     type="warning" 
                     showIcon 
                     
@@ -138,7 +184,7 @@ const EventDetailPage = () => {
                 {/* BANNER */}
                 <div style={{ 
                     width: '100%', 
-                    height: '350px', 
+                    height: '100%', 
                     borderRadius: '16px', 
                     overflow: 'hidden', 
                     marginBottom: '40px',
@@ -149,8 +195,8 @@ const EventDetailPage = () => {
                         // Logic: Nếu link bắt đầu bằng http (link mạng) thì giữ nguyên
                         // Nếu không thì ghép domain backend vào
                         src={
-                            event.anhThumbnail 
-                            ? (event.anhThumbnail.startsWith('http') ? event.anhThumbnail : `${BE_URL}/${event.anhThumbnail}`) 
+                            event.anhBia 
+                            ? (event.anhBia.startsWith('http') ? event.anhBia : `${BE_URL}/${event.anhBia}`) 
                             : fallbackImage
                         }
                         onError={(e) => { e.target.src = fallbackImage; }} 
@@ -189,7 +235,8 @@ const EventDetailPage = () => {
                                     
                                     {/* === FIX LỖI TRÀN CHỮ === */}
                                     <div 
-                                        className="event-content-dark"
+                                    
+                                        className="event-content-view event-content-dark"
                                         style={{ 
                                             color: '#334155', 
                                             fontSize: '16px', 
@@ -203,33 +250,6 @@ const EventDetailPage = () => {
                                         dangerouslySetInnerHTML={{ __html: event.noiDung }} 
                                     />
                                 </div>
-
-                                {/* <Divider style={{ borderColor: '#334155' }} /> */}
-
-                                {/* Phần Diễn giả */}
-                                {/* <div style={{ marginBottom: 10 }}>
-                                    <Title level={4} style={{ color: '#fff', marginBottom: 20 }}>Diễn giả</Title>
-                                    <Row gutter={[16, 16]}>
-                                        <Col xs={24} sm={12}>
-                                            <div style={{ background: '#0f172a', padding: '16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid #334155' }}>
-                                                <Avatar size={56} icon={<UserOutlined />} src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" />
-                                                <div>
-                                                    <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '16px' }}>TS. Lê Minh Quân</div>
-                                                    <div style={{ color: '#94a3b8', fontSize: '13px' }}>Trưởng phòng AI, FPT</div>
-                                                </div>
-                                            </div>
-                                        </Col>
-                                        <Col xs={24} sm={12}>
-                                            <div style={{ background: '#0f172a', padding: '16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid #334155' }}>
-                                                <Avatar size={56} icon={<UserOutlined />} src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" />
-                                                <div>
-                                                    <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '16px' }}>ThS. Nguyễn Thuỳ Anh</div>
-                                                    <div style={{ color: '#94a3b8', fontSize: '13px' }}>Giám đốc sản phẩm, Zalo</div>
-                                                </div>
-                                            </div>
-                                        </Col>
-                                    </Row>
-                                </div> */}
                             </Typography>
                         </Card>
                     </Col>
@@ -267,10 +287,10 @@ const EventDetailPage = () => {
                                     {/* Logic hiển thị chữ trên nút */}
                                     {isPreviewMode ? 'Đây là bản xem trước' : 
                                     (!user ? 'Đăng nhập để tham gia' : 
-                                      (user.role !== 'STUDENT' ? 'Dành cho sinh viên' : 
-                                        (event.isRegistered ? 'Đã đăng ký tham gia' : 
-                                            (isEnded ? 'Sự kiện đã kết thúc' : 
-                                                (isOngoing ? 'Sự kiện đang diễn ra' : 'Đăng ký tham gia ngay')
+                                      (user.role !== 'STUDENT' ? 'Chỉ dành cho sinh viên' : 
+                                        (event.isRegistered ? 'Đăng ký thành công' : 
+                                            (isEnded ? 'Sự kiện này đã kết thúc' : 
+                                                (isOngoing ? 'Sự kiện này đang diễn ra' : 'Đăng ký tham gia ngay')
                                             )
                                         )
                                       )

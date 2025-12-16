@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getPublicEvents, getCategories } from '../services/eventService';
@@ -147,7 +146,7 @@ export const CardComponent = ({ event }) => {
                 boxShadow: '0 4px 20px rgba(0,0,0,0.03)' // Bóng mờ rất nhẹ
             }}
             bodyStyle={{ 
-                padding: '20px', 
+                padding: '15px', 
                 flex: 1, 
                 display: 'flex', 
                 flexDirection: 'column' 
@@ -190,7 +189,7 @@ export const CardComponent = ({ event }) => {
             }
         >
             {/* 1. Tag Danh mục (Pill Style) */}
-            <div style={{ marginBottom: '12px' }}>
+            <div style={{ marginBottom: '0px' }}>
                 <span style={{ 
                     display: 'inline-block',
                     backgroundColor: '#e6f4ff', // Nền xanh rất nhạt
@@ -206,12 +205,12 @@ export const CardComponent = ({ event }) => {
 
             {/* 2. Tiêu đề */}
             <h3 style={{ 
-                fontSize: '17px', 
+                fontSize: '16px', 
                 fontWeight: 700, 
                 color: '#1f1f1f', 
                 marginBottom: '4px',
                 lineHeight: 1.4,
-                height: '38px', // Cố định chiều cao 2 dòng
+                height: '50px', // Cố định chiều cao 2 dòng
                 overflow: 'hidden',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -390,6 +389,23 @@ const HomePage = () => {
         }
     }, [banners]);
 
+    // Hàm helper để tạo URL và Log kiểm tra
+    // const getBannerUrl = (imageUrl) => {
+    //     if (!imageUrl) return null;
+        
+    //     // Nếu là link online (http/https) -> Giữ nguyên
+    //     if (imageUrl.startsWith('http')) return imageUrl;
+        
+    //     // Nếu là tên file -> Nối chuỗi
+    //     // Loại bỏ dấu / ở đầu tên file nếu có để tránh thành .../uploads//file.png
+    //     const cleanImageName = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+    //     const finalUrl = `${BE_URL}/${cleanImageName}`;
+        
+    //     // Mở F12 -> Console để xem dòng này có đúng link bạn test không
+    //     // console.log("Banner URL:", finalUrl); 
+    //     return finalUrl;
+    // };
+
     return (
         <Layout style={{ minHeight: '100vh', background: '#ffffffff' }}>
             <MyNavbar />
@@ -414,27 +430,47 @@ const HomePage = () => {
                                 height: '400px', // Chiều cao cố định cho banner
                                 position: 'relative'
                             }}>
+                                {/* Tìm đoạn <Carousel ...> cũ và thay thế bằng đoạn này */}
                                 <Carousel 
                                     autoplay 
                                     draggable={true}
                                     className="home-banner-carousel"
                                     style={{ height: '100%', background: '#1e293b' }}
                                 >
-                                    {banners.map((banner) => (
-                                        <div key={banner.id} className="home-banner-item">
-                                            <img 
-                                                src={
-                                                    banner.imageUrl 
-                                                    ? (banner.imageUrl.startsWith('http') ? banner.imageUrl : `${BE_URL}/${banner.imageUrl}`)
-                                                    : "https://placehold.co/800x500/1e293b/ffffff?text=Event"
-                                                }
-                                                alt="Event Banner" 
-                                                className="home-banner-img"
-                                                onError={(e) => {e.target.src = "https://placehold.co/800x500/1e293b/ffffff?text=Event"}}
-                                            />
-                                            {/* Đã bỏ lớp phủ text ở đây để ảnh sạch sẽ */}
-                                        </div>
-                                    ))}
+                                    {banners.map((banner) => {
+                                        // --- LOGIC XỬ LÝ URL ẢNH (QUAN TRỌNG NHẤT) ---
+                                        let imageUrl = banner.imageUrl;
+                                        
+                                        // Nếu không phải link online, gọi qua API Backend
+                                        if (imageUrl && !imageUrl.startsWith('http')) {
+                                            // API MỚI: /api/banners/images/{ten_file}
+                                            // Lưu ý: port 8080
+                                            const cleanName = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+                                            imageUrl = `http://localhost:8080/api/banners/images/${cleanName}`;
+                                        }
+                                        // ---------------------------------------------
+
+                                        return (
+                                            <div key={banner.id} className="home-banner-item" style={{ height: '100%' }}>
+                                                <img 
+                                                    src={imageUrl} 
+                                                    alt="Banner" 
+                                                    className="home-banner-img"
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        height: '100%', 
+                                                        objectFit: 'cover', 
+                                                        display: 'block'
+                                                    }}
+                                                    onError={(e) => {
+                                                        // Nếu lỗi, hiển thị ảnh placeholder
+                                                        e.target.onerror = null; 
+                                                        e.target.src = "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png";
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                    })}
                                 </Carousel>
                             </div>
                         ) : (

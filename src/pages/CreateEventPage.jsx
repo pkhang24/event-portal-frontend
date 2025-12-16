@@ -1,7 +1,10 @@
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { useState, useEffect } from 'react';
 import { 
     Layout, Form, Input, Button, Select, DatePicker, 
-    Upload, message, Card, Row, Col, Typography, Space, Modal, Divider, Tag
+    Upload, message, Card, Row, Col, Typography, 
+    Space, Modal, Divider, Tag, Image
 } from 'antd';
 import { 
     CloudUploadOutlined, SaveOutlined, SendOutlined, EyeOutlined,
@@ -37,6 +40,23 @@ const CreateEventPage = () => {
     // State Modal Xem trước
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewData, setPreviewData] = useState(null);
+
+    const modules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+        [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+        ['link', 'image'],
+        ['clean']
+    ],
+};
+
+    const formats = [
+        'header',
+        'bold', 'italic', 'underline', 'strike', 'blockquote',
+        'list', 'bullet', 'indent',
+        'link', 'image'
+    ];
 
     // Load danh mục
     useEffect(() => {
@@ -170,8 +190,43 @@ const CreateEventPage = () => {
     };
 
     const customUploadStyle = `
+        /* 1. Style cho ô upload ảnh (Giữ nguyên) */
         .custom-upload-dragger .ant-upload-list-picture-card-container { width: 180px !important; height: 180px !important; }
         .custom-upload-dragger .ant-upload-list-item-list-type-picture-card { width: 100% !important; height: 100% !important; }
+        
+        /* 2. Style cho Editor (Khung nhập liệu) */
+        .ql-container { 
+            min-height: 200px; 
+            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; 
+        }
+        
+        /* 3. XỬ LÝ KHOẢNG CÁCH DÒNG (FIX LỖI ENTER) */
+        .ql-editor p, 
+        .event-content-preview p {
+            margin-bottom: 0px !important;
+            margin-top: 0px !important;
+            padding: 0 !important;
+            line-height: 1.5 !important;
+        }
+
+        /* Xử lý danh sách */
+        .ql-editor ul, .ql-editor ol,
+        .event-content-preview ul, .event-content-preview ol {
+            margin: 0 !important;
+            padding-left: 1.5em !important;
+        }
+        
+        /* === 4. QUAN TRỌNG: FIX ẢNH BỊ TRÀN KHUNG === */
+        .ql-editor img, 
+        .event-content-preview img {
+            max-width: 100% !important; /* Ép ảnh không bao giờ to hơn khung chứa */
+            height: auto !important;    /* Giữ nguyên tỷ lệ ảnh (không bị méo) */
+            display: block;             /* Đưa về dạng khối */
+            margin: 10px auto;          /* Căn giữa ảnh và tạo khoảng cách trên dưới */
+            border-radius: 8px;         /* Bo góc nhẹ cho đẹp (tuỳ chọn) */
+            object-fit: contain;        /* Đảm bảo ảnh nằm gọn */
+        }
     `;
 
     // === 3. CHUẨN BỊ DỮ LIỆU XEM TRƯỚC (DÙNG MODAL) ===
@@ -214,6 +269,39 @@ const CreateEventPage = () => {
         }
     };
 
+    // === HÀM RENDER NỘI DUNG DRAGGER (DẠNG Ô VUÔNG NHỎ) ===
+    const renderDraggerContent = (fileList, icon = <CloudUploadOutlined />) => {
+        if (fileList.length > 0) {
+            const file = fileList[0];
+            const src = file.url || (file.originFileObj ? URL.createObjectURL(file.originFileObj) : null);
+            
+            return (
+                <div 
+                    onClick={(e) => e.stopPropagation()} 
+                    style={{ width: '100%', height: '100%', padding: 0, display: 'flex' }}
+                >
+                    <Image
+                        src={src}
+                        width="100%"
+                        height="100%"
+                        style={{ objectFit: 'cover', borderRadius: '8px' }}
+                        preview={{
+                            mask: <div style={{ fontSize: 12 }}><EyeOutlined /> Xem</div>,
+                        }}
+                    />
+                </div>
+            );
+        }
+        
+        // Giao diện khi chưa có ảnh (Tối giản cho ô vuông nhỏ)
+        return (
+            <div style={{ marginTop: 8 }}>
+                <p className="ant-upload-drag-icon" style={{ marginBottom: 8, fontSize: 20 }}>{icon}</p>
+                <div style={{ fontSize: 12, color: '#999' }}>Upload</div>
+            </div>
+        );
+    };
+
     return (
         <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
             <style>{customUploadStyle}</style>
@@ -239,42 +327,79 @@ const CreateEventPage = () => {
                                     <TextArea rows={3} placeholder="Mô tả ngắn gọn..." />
                                 </Form.Item>
 
-                                <Form.Item name="noiDung" label="Mô tả chi tiết" rules={[{ required: true, message: 'Vui lòng nhập nội dung chi tiết!' }]}>
-                                    <TextArea rows={8} placeholder="Nội dung chi tiết..." />
+                                <Form.Item 
+                                    name="noiDung" 
+                                    label="Mô tả chi tiết" 
+                                    rules={[{ required: true, message: 'Vui lòng nhập nội dung chi tiết!' }]}
+                                >
+                                    <ReactQuill 
+                                        theme="snow" 
+                                        modules={modules} 
+                                        formats={formats} 
+                                        placeholder="Soạn thảo nội dung sự kiện tại đây (có thể chèn ảnh, định dạng văn bản)..."
+                                        style={{ height: '300px', marginBottom: '50px' }} // marginBottom để tránh thanh công cụ che mất nút bên dưới
+                                    />
                                 </Form.Item>
 
-                                <Form.Item label="Ảnh Thumbnail (Danh sách)" required tooltip="Ảnh nhỏ hiển thị ở danh sách">
-                                    <Dragger 
-                                        className="custom-upload-dragger"
-                                        fileList={thumbnailFileList}
-                                        beforeUpload={beforeUpload}
-                                        onChange={(info) => handleFileChange(info, 'THUMB')}
-                                        onPreview={onPreview}
-                                        maxCount={1}
-                                        listType="picture-card"
-                                        showUploadList={{ showRemoveIcon: true, showPreviewIcon: true }}
-                                        style={{ border: thumbnailFileList.length > 0 ? 'none' : '1px dashed #d9d9d9', background: thumbnailFileList.length > 0 ? 'transparent' : '#fafafa', padding: thumbnailFileList.length > 0 ? 0 : 16 }}
-                                        height={thumbnailFileList.length > 0 ? 'auto' : 200}
-                                    >
-                                        {thumbnailFileList.length < 1 && (<><p className="ant-upload-drag-icon"><CloudUploadOutlined /></p><p className="ant-upload-text">Chọn Thumbnail</p></>)}
-                                    </Dragger>
+                                {/* --- ẢNH THUMBNAIL --- */}
+                                <Form.Item label="Ảnh Thumbnail" required tooltip="Ảnh nhỏ hiển thị ở danh sách">
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                        <Dragger 
+                                            fileList={thumbnailFileList}
+                                            beforeUpload={beforeUpload}
+                                            onChange={(info) => handleFileChange(info, 'THUMB')}
+                                            maxCount={1}
+                                            showUploadList={false}
+                                            // Style ép về dạng ô vuông nhỏ
+                                            style={{ 
+                                                width: 200,  // Cố định chiều rộng
+                                                height: 200, // Cố định chiều cao
+                                                border: thumbnailFileList.length > 0 ? 'none' : '1px dashed #d9d9d9',
+                                                background: '#fafafa',
+                                                borderRadius: '8px',
+                                                padding: 0,  // Xóa padding để ảnh tràn viền
+                                                overflow: 'hidden',
+                                                display: 'block' // Quan trọng để Dragger nhận width/height
+                                            }}
+                                        >
+                                            {renderDraggerContent(thumbnailFileList)}
+                                        </Dragger>
+
+                                        {/* Nút xóa nằm bên cạnh (hoặc bỏ nếu không cần) */}
+                                        {thumbnailFileList.length > 0 && (
+                                            <Button type="text" danger icon={<div style={{fontSize: 18}}>×</div>} onClick={() => setThumbnailFileList([])} />
+                                        )}
+                                    </div>
                                 </Form.Item>
 
+                                {/* --- ẢNH BÌA --- */}
                                 <Form.Item label="Ảnh Bìa (Chi tiết)" tooltip="Ảnh lớn hiển thị trong trang chi tiết">
-                                    <Dragger 
-                                        className="custom-upload-dragger"
-                                        fileList={coverFileList}
-                                        beforeUpload={beforeUpload}
-                                        onChange={(info) => handleFileChange(info, 'COVER')}
-                                        onPreview={onPreview}
-                                        maxCount={1}
-                                        listType="picture-card"
-                                        showUploadList={{ showRemoveIcon: true, showPreviewIcon: true }}
-                                        style={{ border: coverFileList.length > 0 ? 'none' : '1px dashed #d9d9d9', background: coverFileList.length > 0 ? 'transparent' : '#fafafa', padding: coverFileList.length > 0 ? 0 : 16 }}
-                                        height={coverFileList.length > 0 ? 'auto' : 200}
-                                    >
-                                        {coverFileList.length < 1 && (<><p className="ant-upload-drag-icon"><CloudUploadOutlined style={{ color: 'green' }}/></p><p className="ant-upload-text">Chọn ảnh Bìa lớn</p></>)}
-                                    </Dragger>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                        <Dragger 
+                                            fileList={coverFileList}
+                                            beforeUpload={beforeUpload}
+                                            onChange={(info) => handleFileChange(info, 'COVER')}
+                                            maxCount={1}
+                                            showUploadList={false}
+                                            // Style ép về dạng ô vuông nhỏ (có thể làm to hơn xíu vì là ảnh bìa)
+                                            style={{ 
+                                                width: 200, // Hoặc 200 nếu muốn ảnh bìa to hơn Thumbnail
+                                                height: 200, 
+                                                border: coverFileList.length > 0 ? 'none' : '1px dashed #d9d9d9',
+                                                background: '#fafafa',
+                                                borderRadius: '8px',
+                                                padding: 0,
+                                                overflow: 'hidden',
+                                                display: 'block'
+                                            }}
+                                        >
+                                            {renderDraggerContent(coverFileList, <CloudUploadOutlined style={{ color: 'green' }}/>)}
+                                        </Dragger>
+
+                                        {coverFileList.length > 0 && (
+                                            <Button type="text" danger icon={<div style={{fontSize: 18}}>×</div>} onClick={() => setCoverFileList([])} />
+                                        )}
+                                    </div>
                                 </Form.Item>
 
                                 <Form.Item name="categoryId" label="Thể loại" rules={[{ required: true, message: 'Vui lòng chọn thể loại!' }]}>
@@ -335,7 +460,7 @@ const CreateEventPage = () => {
                     <div style={{ padding: '24px' }}>
                         {/* BANNER: Dùng ảnh bìa, nếu không có thì dùng thumbnail */}
                         <div style={{ 
-                            width: '100%', height: '350px', 
+                            width: '100%', height: '100%', 
                             borderRadius: '16px', overflow: 'hidden', marginBottom: '40px',
                             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', background: '#fff'
                         }}>
@@ -364,9 +489,10 @@ const CreateEventPage = () => {
                                         <div style={{ marginBottom: 40 }}>
                                             <Title level={4} style={{ color: '#334155', marginBottom: 16 }}>Mô tả chi tiết</Title>
                                             <div 
-                                                className="event-content-preview"
+                                                className="ql-editor event-content-preview"
                                                 style={{ color: '#334155', fontSize: '16px', lineHeight: '1.8', overflowWrap: 'break-word' }}
-                                                dangerouslySetInnerHTML={{ __html: previewData.noiDung ? previewData.noiDung.replace(/\n/g, '<br/>') : '' }} 
+                                                // QUAN TRỌNG: Dùng dangerouslySetInnerHTML để hiển thị HTML từ Editor
+                                                dangerouslySetInnerHTML={{ __html: previewData.noiDung }} 
                                             />
                                         </div>
                                     </Typography>

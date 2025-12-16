@@ -142,6 +142,41 @@ const AdminEventsPage = () => {
         { key: 'CANCELLED', label: (<Space>Đã hủy<Badge count={countStatus('CANCELLED')} showZero color="#ff4d4f" /></Space>), icon: <StopOutlined /> },
     ];
 
+    // CSS định dạng nội dung cho Admin Preview
+    const adminContentStyle = `
+        .admin-content-view {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            font-size: 15px; /* Admin có thể để chữ nhỏ hơn chút cho gọn */
+            line-height: 1.6;
+            color: #333;
+            overflow-wrap: break-word;
+        }
+
+        /* 1. Fix lỗi Enter bị xa */
+        .admin-content-view p {
+            margin-bottom: 0px !important;
+            margin-top: 0px !important;
+            padding: 0 !important;
+            line-height: 1.5 !important;
+        }
+
+        /* 2. Fix lỗi danh sách */
+        .admin-content-view ul, .admin-content-view ol {
+            margin: 0 !important;
+            padding-left: 1.5em !important;
+        }
+
+        /* 3. Fix lỗi ẢNH BỊ TRÀN (Quan trọng nhất) */
+        .admin-content-view img {
+            max-width: 100% !important; 
+            height: auto !important;    
+            display: block;
+            margin: 10px auto;          
+            border-radius: 4px;
+            border: 1px solid #f0f0f0; /* Thêm viền nhẹ để Admin dễ nhìn */
+        }
+    `;
+
     return (
         <Card 
             title="Quản lý Sự kiện" 
@@ -227,11 +262,12 @@ const AdminEventsPage = () => {
                 ]}
                 bodyStyle={{ padding: 0, background: '#f5f7fa' }}
             >
+                <style>{adminContentStyle}</style>
                 {previewEvent && (
                     <div style={{ padding: '24px' }}>
                         {/* BANNER */}
                         <div style={{ 
-                            width: '100%', height: '300px', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px', background: '#fff'
+                            width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px', background: '#fff'
                         }}>
                              <img
                                 alt={previewEvent.tieuDe}
@@ -249,6 +285,7 @@ const AdminEventsPage = () => {
                                     <Paragraph style={{ fontSize: '16px', color: '#666' }}>{previewEvent.moTaNgan}</Paragraph>
                                     <Divider />
                                     <div 
+                                        className="admin-content-view"
                                         style={{ fontSize: '15px', lineHeight: '1.6', overflowWrap: 'break-word' }}
                                         dangerouslySetInnerHTML={{ __html: previewEvent.noiDung }} 
                                     />
