@@ -25,16 +25,11 @@ const AdminBannersPage = () => {
 
     useEffect(() => { fetchBanners(); }, [view]);
 
-    // --- HÀM SAVE ĐÃ SỬA ĐỔI ĐỂ HỖ TRỢ UPLOAD ---
-    const handleSave = async (id, formData) => { // Tham số thứ 2 là formData đã đóng gói từ con
+    const handleSave = async (id, formData) => {
         try {
-            // Không cần new FormData() nữa vì bên con đã làm rồi
-            
             if (id) {
-                // Cập nhật
                 await updateBanner(id, formData);
             } else {
-                // Thêm mới
                 await createBanner(formData);
             }
 

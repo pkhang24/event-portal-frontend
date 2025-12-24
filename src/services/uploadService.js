@@ -5,7 +5,7 @@ export const uploadFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const token = localStorage.getItem('token'); // Lấy token nếu cần
+    const token = localStorage.getItem('token');
 
     const response = await axios.post('http://192.168.2.8:8080/api/upload', formData, {
         headers: {

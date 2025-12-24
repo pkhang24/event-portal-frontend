@@ -18,9 +18,8 @@ const MyTicketsPage = () => {
 
     const navigate = useNavigate();
 
-    // --- 3. Tách hàm fetchTickets ra ngoài để tái sử dụng ---
     const fetchTickets = async () => {
-        setLoading(true); // Đặt loading mỗi lần fetch
+        setLoading(true);
         try {
             const response = await api.get('/registrations/my-tickets');
             setTickets(response.data);
@@ -47,20 +46,20 @@ const MyTicketsPage = () => {
         setSelectedTicket(null);
     };
 
-    // --- 4. Thêm hàm xử lý Hủy vé ---
+    // --- Hàm xử lý Hủy vé ---
     const handleCancelTicket = async (registrationId) => {
         try {
             await cancelRegistration(registrationId);
             message.success("Hủy vé thành công!");
-            fetchTickets(); // Tải lại danh sách vé
+            fetchTickets();
         } catch (err) {
             message.error(err.response?.data?.message || "Hủy vé thất bại.");
         }
     };
 
-    // --- 5. Thêm hàm kiểm tra sự kiện đã bắt đầu chưa ---
+    // --- Hàm kiểm tra sự kiện đã bắt đầu chưa ---
     const hasEventStarted = (startTime) => {
-        return new Date(startTime) < new Date(); // So sánh với thời gian hiện tại
+        return new Date(startTime) < new Date();
     };
 
     return (
@@ -83,11 +82,9 @@ const MyTicketsPage = () => {
                     <List
                         grid={{ gutter: 16, xs: 1, sm: 1, md: 2, lg: 3, xl: 3, xxl: 4 }}
                         dataSource={tickets}
-                        // --- 6. Cập nhật logic Render Item ---
                         renderItem={ticket => {
                             const eventStarted = hasEventStarted(ticket.thoiGianBatDau);
                             
-                            // Tạo mảng actions
                             const cardActions = [
                                 <Button 
                                     type="primary" 
@@ -99,7 +96,6 @@ const MyTicketsPage = () => {
                                 </Button>
                             ];
 
-                            // Chỉ thêm nút Hủy nếu sự kiện CHƯA bắt đầu VÀ vé CHƯA điểm danh
                             if (!eventStarted && ticket.trangThai === 'REGISTERED') {
                                 cardActions.push(
                                     <Popconfirm
@@ -122,12 +118,11 @@ const MyTicketsPage = () => {
                                     <Card
                                         title={ticket.tieuDeSuKien}
                                         extra={
-                                            // Cập nhật Tag cho rõ ràng
                                             ticket.trangThai === 'ATTENDED' ? 
                                             <Tag color="green">Đã tham gia</Tag> : 
                                             (eventStarted ? <Tag color="red">Đã diễn ra</Tag> : <Tag color="blue">Đã đăng ký</Tag>)
                                         }
-                                        actions={cardActions} // Gán mảng actions vào
+                                        actions={cardActions}
                                     >
                                         <p><CalendarOutlined /> {new Date(ticket.thoiGianBatDau).toLocaleString('vi-VN')}</p>
                                         <p><EnvironmentOutlined /> {ticket.diaDiem}</p>
@@ -140,7 +135,7 @@ const MyTicketsPage = () => {
                 </div>
             </Content>
 
-            {/* Modal hiển thị mã QR (Giữ nguyên) */}
+            {/* Modal hiển thị mã QR */}
             <Modal 
                 title="Mã QR điểm danh" 
                 open={isModalVisible} 

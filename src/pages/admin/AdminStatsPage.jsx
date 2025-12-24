@@ -44,7 +44,6 @@ const AdminStatsPage = () => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            // Đặt tên file
             a.download = `Bao_cao_thong_ke_${year}.xlsx`;
             document.body.appendChild(a);
             a.click();

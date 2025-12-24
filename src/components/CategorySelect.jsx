@@ -2,7 +2,6 @@ import { Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { getCategories } from '../services/eventService';
 
-// props: value, onChange (để dùng trong Form)
 const CategorySelect = ({ value, onChange }) => {
     const [categories, setCategories] = useState([]);
     useEffect(() => {

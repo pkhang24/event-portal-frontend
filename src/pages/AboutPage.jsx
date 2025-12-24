@@ -15,7 +15,7 @@ const AboutPage = () => {
             {/* Hero Banner Giới thiệu */}
             <div style={{ background: '#001529', padding: '80px 20px', textAlign: 'center', color: '#fff' }}>
                 <img src={logoImage} alt="Logo" style={{ height: 100, marginBottom: 20 }} />
-                <Title level={1} style={{ color: '#fff', margin: 0 }}>Về Event Portal</Title>
+                <Title level={1} style={{ color: '#fff', margin: 0 }}>Về Chúng Tôi</Title>
                 <Paragraph style={{ color: 'rgba(255,255,255,0.8)', fontSize: 18, maxWidth: 700, margin: '20px auto' }}>
                     Cổng thông tin sự kiện chính thức của Khoa Công nghệ & Kỹ thuật - Nơi kết nối sinh viên với những hoạt động bổ ích và cơ hội phát triển.
                 </Paragraph>

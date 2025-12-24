@@ -3,7 +3,7 @@ import { Layout, Typography, Card, Descriptions, Form, Input, Button, message, S
 import { UserOutlined, MailOutlined, PhoneOutlined, IdcardOutlined, BookOutlined, LockOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import MyNavbar from '../components/MyNavbar';
-import { getMyProfile, updateMyProfile, changePassword } from '../services/api'; // (hoặc profileService)
+import { getMyProfile, updateMyProfile, changePassword } from '../services/api';
 import { logout } from '../services/authService';
 
 const { Content } = Layout;
@@ -16,9 +16,8 @@ const ProfilePage = () => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-// === 1. KHỞI TẠO HOOK MESSAGE (QUAN TRỌNG) ===
     const [messageApi, contextHolder] = message.useMessage();
-    // Load thông tin user khi vào trang
+
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -38,35 +37,32 @@ const ProfilePage = () => {
         fetchProfile();
     }, [form]);
 
-    // === 1. XỬ LÝ CẬP NHẬT THÔNG TIN (Email & SĐT) ===
+    // === XỬ LÝ CẬP NHẬT Email & SĐT ===
     const onFinishInfo = async (values) => {
         try {
             const updatedUser = await updateMyProfile(values);
 
             if (user.email !== updatedUser.email) {
-                // === DÙNG messageApi ĐỂ HIỆN THÔNG BÁO ===
                 messageApi.open({
                     type: 'success',
                     content: 'Email đã được đổi. Vui lòng đăng nhập lại!',
-                    duration: 2, // Hiện trong 2 giây
+                    duration: 2,
                 });
                 
-                // Đợi 2 giây cho user đọc thông báo rồi mới đẩy ra
                 setTimeout(() => {
                     logout();
                     navigate('/login');
                 }, 3000);
             } else {
-                // TRƯỜNG HỢP 2: Chỉ đổi SĐT -> Cập nhật ngay tại chỗ
                 messageApi.success("Cập nhật thông tin thành công");
-                setUser(updatedUser); // Cập nhật lại giao diện với data mới
+                setUser(updatedUser);
             }
         } catch (err) {
             messageApi.error(err.response?.data?.message || "Cập nhật thất bại.");
         }
     };
 
-    // === 2. XỬ LÝ ĐỔI MẬT KHẨU ===
+    // === XỬ LÝ ĐỔI MẬT KHẨU ===
     const onFinishPassword = async (values) => {
         if (values.newPassword !== values.confirmPassword) {
             messageApi.error("Mật khẩu xác nhận không khớp!");
@@ -78,9 +74,8 @@ const ProfilePage = () => {
                 oldPassword: values.oldPassword,
                 newPassword: values.newPassword
             });
-            // TRƯỜNG HỢP 3: Đổi mật khẩu thành công
             messageApi.success("Đổi mật khẩu thành công");
-            passForm.resetFields(); // Xóa trắng form mật khẩu
+            passForm.resetFields();
         } catch (err) {
             messageApi.error(err.response?.data?.message || "Đổi mật khẩu thất bại. Mật khẩu cũ sai?");
         }
@@ -165,7 +160,7 @@ const ProfilePage = () => {
                             </Col>
 
                             <Col xs={24} md={8}>
-                                {/* --- THÊM CARD ĐỔI MẬT KHẨU --- */}
+                                {/* --- CARD ĐỔI MẬT KHẨU --- */}
                                 <Card title="Đổi mật khẩu" style={{ height: '100%' }}>
                                     <Form form={passForm} layout="vertical" onFinish={onFinishPassword}>
                                         <Form.Item

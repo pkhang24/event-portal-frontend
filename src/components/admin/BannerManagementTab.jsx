@@ -10,10 +10,6 @@ const BannerManagementTab = ({ banners, loading, viewMode = 'list', onSave, onDe
 
     const BE_URL = "http://localhost:8080/uploads"; 
 
-    // ... (Giữ nguyên các hàm showModal, handleCancel, renderImage, handleFinish, handleUploadChange của bạn) ...
-    // Code của bạn ở phần này đã chuẩn rồi, không cần sửa lại logic FormData nữa.
-    
-    // Hàm render ảnh (Copy lại từ code bạn để dùng chung)
     const renderImage = (imgName) => {
         if (!imgName) return "https://placehold.co/1200x400?text=No+Image";
         if (imgName.startsWith('http')) return imgName;
@@ -60,7 +56,7 @@ const BannerManagementTab = ({ banners, loading, viewMode = 'list', onSave, onDe
 
     const handleUploadChange = ({ fileList: newFileList }) => setFileList(newFileList.slice(-1));
 
-    // --- 1. CỘT CHO DANH SÁCH (LIST) ---
+    // --- LIST ---
     const listColumns = [
         { 
             title: 'Ảnh', dataIndex: 'imageUrl', key: 'imageUrl', 
@@ -80,7 +76,7 @@ const BannerManagementTab = ({ banners, loading, viewMode = 'list', onSave, onDe
         }
     ];
 
-    // --- 2. CỘT CHO THÙNG RÁC (TRASH) - BẠN ĐANG THIẾU PHẦN NÀY ---
+    // --- TRASH ---
     const trashColumns = [
         { 
             title: 'Ảnh', dataIndex: 'imageUrl', key: 'imageUrl', 
@@ -107,7 +103,6 @@ const BannerManagementTab = ({ banners, loading, viewMode = 'list', onSave, onDe
                 </Button>
             )}
             
-            {/* --- 3. SỬA LẠI CHỖ NÀY ĐỂ CHUYỂN CỘT KHI ĐỔI TAB --- */}
             <Table 
                 dataSource={banners} 
                 columns={viewMode === 'list' ? listColumns : trashColumns} 

@@ -19,9 +19,9 @@ const NotificationBell = () => {
     const fetchNotifications = async () => {
         try {
             setLoading(true);
-            const data = await getNotifications(); // Gọi API
+            const data = await getNotifications();
             setNotifications(data);
-            const count = data.filter(n => !n.read).length; // Giả sử backend trả về field 'read' hoặc 'isRead'
+            const count = data.filter(n => !n.read).length;
             setUnreadCount(count);
         } catch (err) {
             console.error("Lỗi tải thông báo", err);
@@ -32,7 +32,6 @@ const NotificationBell = () => {
 
     useEffect(() => {
         fetchNotifications();
-        // Tự động refresh mỗi 60s
         const interval = setInterval(fetchNotifications, 60000);
         return () => clearInterval(interval);
     }, []);

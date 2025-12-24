@@ -1,23 +1,15 @@
 import { Table, Button, Space, Popconfirm, Tabs, Image, Tag } from 'antd';
 import { DeleteFilled, UndoOutlined } from '@ant-design/icons';
 
-/**
- * Component con hiển thị Thùng rác.
- * Nhận tất cả dữ liệu và hàm xử lý từ cha (AdminDashboardPage).
- */
 const RecycleBinTab = ({ 
     loading,
-    // User Props
     deletedUsers, onRestoreUser, onPermanentDeleteUser,
-    // Event Props
     deletedEvents, onRestoreEvent, onPermanentDeleteEvent,
-    // Category Props (Mới)
     deletedCategories, onRestoreCategory, onPermanentDeleteCategory,
-    // Banner Props (Mới)
     deletedBanners, onRestoreBanner, onPermanentDeleteBanner
 }) => {
 
-    // --- 1. Cấu hình Cột cho USER ---
+    // --- Cột cho USER ---
     const userTrashColumns = [
         { title: 'Họ tên', dataIndex: 'hoTen', key: 'hoTen' },
         { title: 'Email', dataIndex: 'email', key: 'email' },
@@ -38,7 +30,7 @@ const RecycleBinTab = ({
         }
     ];
 
-    // --- 2. Cấu hình Cột cho EVENT ---
+    // --- Cột cho EVENT ---
     const eventTrashColumns = [
         { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'tieuDe' },
         {
@@ -58,7 +50,7 @@ const RecycleBinTab = ({
         }
     ];
 
-    // --- 3. Cấu hình Cột cho CATEGORY (Mới) ---
+    // --- Cột cho CATEGORY ---
     const categoryTrashColumns = [
         { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
         { title: 'Tên Danh mục', dataIndex: 'tenDanhMuc', key: 'tenDanhMuc' },
@@ -79,7 +71,7 @@ const RecycleBinTab = ({
         }
     ];
 
-    // --- 4. Cấu hình Cột cho BANNER (Mới) ---
+    // --- Cột cho BANNER ---
     const bannerTrashColumns = [
         { 
             title: 'Ảnh', 
@@ -111,12 +103,10 @@ const RecycleBinTab = ({
         }
     ];
 
-    // Sử dụng Tabs để chia nhỏ giao diện thùng rác
     return (
         <Tabs defaultActiveKey="trash_users" type="card" items={[
             {
                 key: 'trash_users',
-                // Sử dụng ?.length || 0 để tránh lỗi undefined khi dữ liệu chưa tải xong
                 label: `Người dùng (${deletedUsers?.length || 0})`,
                 children: <Table dataSource={deletedUsers} columns={userTrashColumns} rowKey="id" loading={loading} />
             },

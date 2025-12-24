@@ -12,7 +12,7 @@ const UserManagementTab = ({
     onDelete, 
     onView,
     onRestore,
-    onLock // Thêm prop cho hành động khóa (cần truyền từ cha xuống sau này)
+    onLock
 }) => {
 
     const listColumns = [
@@ -37,7 +37,7 @@ const UserManagementTab = ({
                     style={{ width: '100%' }}
                     onChange={(newRole) => onRoleChange(record.id, newRole)}
                     disabled={role === 'ADMIN'}
-                    size="medium" // Dropdown nhỏ gọn
+                    size="medium" // Dropdow
                 >
                     <Option value="STUDENT">Student</Option>
                     <Option value="POSTER">Poster</Option>
@@ -48,8 +48,8 @@ const UserManagementTab = ({
         {
             title: 'Hành động',
             key: 'action',
-            width: 200,       // Đặt chiều rộng cố định đủ cho các nút
-            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            width: 200,
+            fixed: 'right',
             align: 'center',
             render: (_, record) => (
                 <Space size="small">
@@ -70,7 +70,7 @@ const UserManagementTab = ({
                         />
                     </Tooltip>
 
-                    {/* Nút Khóa Tài khoản (Mới) */}
+                    {/* Nút Khóa Tài khoản */}
                     <Tooltip title={record.isLocked ? "Mở khóa tài khoản" : "Khóa tài khoản"}>
                         <Popconfirm
                             title={record.isLocked ? "Mở khóa tài khoản này?" : "Khóa tài khoản này?"}
@@ -82,7 +82,6 @@ const UserManagementTab = ({
                         >
                             <Button 
                                 size="medium" 
-                                // Nếu đang khóa -> Icon Mở khóa (Xanh), Ngược lại -> Icon Khóa (Cam)
                                 icon={record.isLocked ? <LockOutlined /> : <UnlockOutlined />} 
                                 style={{ 
                                     color: record.isLocked ? '#faad14' : '#52c41a', 
@@ -132,7 +131,7 @@ const UserManagementTab = ({
             title: 'Hành động',
             key: 'action',
             width: 180,
-            fixed: 'right',   // <<< QUAN TRỌNG
+            fixed: 'right',
             align: 'center',
             render: (_, record) => (
                 <Space size="small">

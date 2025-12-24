@@ -10,16 +10,14 @@ import { Link } from 'react-router-dom';
 import moment from 'moment';
 import 'moment/locale/vi';
 
-// Import Services
 import { 
     getDashboardStats, 
     getTopEventStats, 
     getTopCategoryStats, 
     getRecentActivities 
 } from '../../services/adminService';
-import { getPublicEvents } from '../../services/eventService'; // Import thêm cái này
+import { getPublicEvents } from '../../services/eventService';
 
-// Import Chart
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement
 } from 'chart.js';
@@ -37,9 +35,9 @@ const DashboardHome = () => {
     const [barData, setBarData] = useState(null);
     const [doughnutData, setDoughnutData] = useState(null);
     const [activities, setActivities] = useState([]);
-    const [ongoingEvents, setOngoingEvents] = useState([]); // State mới cho sự kiện đang diễn ra
+    const [ongoingEvents, setOngoingEvents] = useState([]);
 
-    // --- 1. Tải Thống kê Tổng quan (Rất quan trọng, ít lỗi) ---
+    // --- Tải Thống kê Tổng quan ---
     useEffect(() => {
         const fetchStats = async () => {
             try {
@@ -47,22 +45,18 @@ const DashboardHome = () => {
                 setStats(statsRes);
             } catch (err) {
                 console.error("Lỗi tải Stats:", err);
-                // Không hiện message lỗi để tránh spam nếu mạng chập chờn
             } finally {
-                // Chỉ tắt loading khi phần quan trọng nhất (Stats) đã xong
                 setLoading(false); 
             }
         };
         fetchStats();
     }, []);
 
-    // --- 2. Tải Biểu đồ (Cột & Tròn) ---
+    // --- Tải Biểu đồ ---
     useEffect(() => {
         const fetchCharts = async () => {
             try {
                 const currentYear = new Date().getFullYear();
-                
-                // Gọi song song 2 API biểu đồ (Nếu 1 cái lỗi thì cả 2 biểu đồ sẽ không hiện, nhưng Stats vẫn hiện)
                 const [topEventsRes, categoryRes] = await Promise.all([
                     getTopEventStats(currentYear, 0),
                     getTopCategoryStats(currentYear, 0)
@@ -100,7 +94,7 @@ const DashboardHome = () => {
         fetchCharts();
     }, []);
 
-    // --- 3. Tải Hoạt động gần đây (DỄ LỖI NHẤT KHI XÓA USER) ---
+    // --- Tải Hoạt động gần đây ---
     useEffect(() => {
         const fetchActivities = async () => {
             try {
@@ -108,19 +102,17 @@ const DashboardHome = () => {
                 setActivities(activitiesRes);
             } catch (err) {
                 console.error("Lỗi tải Hoạt động:", err);
-                // Nếu lỗi, danh sách hoạt động sẽ trống, nhưng KHÔNG LÀM SẬP TRANG
             }
         };
         fetchActivities();
     }, []);
 
-    // --- 4. Tải Sự kiện đang diễn ra ---
+    // --- Tải Sự kiện đang diễn ra ---
     useEffect(() => {
         const fetchOngoing = async () => {
             try {
                 const allEventsRes = await getPublicEvents();
                 const now = new Date();
-                // Lấy tất cả sự kiện đang diễn ra
                 const activeEvents = allEventsRes.filter(e => 
                     new Date(e.thoiGianBatDau) <= now && new Date(e.thoiGianKetThuc) >= now
                 );
@@ -165,7 +157,7 @@ const DashboardHome = () => {
             <h2 style={{ marginBottom: 5, fontSize: 24, fontWeight: 700, color: '#1e293b' }}>Tổng quan Dashboard</h2>
             <p style={{ color: '#64748b', marginBottom: 24 }}>Chào mừng quản trị viên quay trở lại.</p>
 
-            {/* HÀNG 1: THỐNG KÊ */}
+            {/* THỐNG KÊ */}
             <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                 <Col xs={24} sm={12} lg={8}>
                     <StatCard title="Tổng Người dùng" value={stats.totalUsers} icon={<UserOutlined style={{fontSize: 20}}/>} color="#3b82f6" />
@@ -179,9 +171,9 @@ const DashboardHome = () => {
             </Row>
 
             <Row gutter={[16, 16]}>
-                {/* === CỘT TRÁI (LỚN): Biểu đồ & Hoạt động gần đây === */}
+                {/* === Biểu đồ & Hoạt động gần đây === */}
                 <Col xs={24} lg={16}>
-                    {/* 1. Biểu đồ Top Sự kiện */}
+                    {/* Biểu đồ Top Sự kiện */}
                     <Card title={<span><BarChartOutlined style={{color: '#0cdd17ff', marginRight: 8}}/> Sự kiện hàng đầu trong năm</span>} bordered={false} style={{ borderRadius: 12, marginBottom: 16 }}>
                         <div style={{ height: 300 }}>
                             {barData ? <Bar data={barData} options={chartOptions} /> : 
@@ -189,19 +181,17 @@ const DashboardHome = () => {
                         </div>
                     </Card>
 
-                    {/* 2. Hoạt động gần đây (Đã chuyển xuống đây) */}
+                    {/* Hoạt động gần đây */}
                     <Card title={<span><HistoryOutlined style={{color: '#efa544ff', marginRight: 8}}/> Hoạt động gần đây</span>} bordered={false} style={{ borderRadius: 12 }}>
         
-                    {/* 1. Tạo div bao ngoài để set chiều cao cố định */}
                     <div style={{ 
-                        height: '200px', // Chiều cao cố định (bạn có thể chỉnh số này)
-                        overflowY: 'auto', // Nếu nội dung dài hơn, hiện thanh cuộn dọc
-                        overflowX: 'hidden' // Ẩn thanh cuộn ngang
+                        height: '200px',
+                        overflowY: 'auto',
+                        overflowX: 'hidden'
                     }}>
                         <List
                             itemLayout="horizontal"
                             dataSource={activities}
-                            // Bạn có thể bỏ pagination nếu muốn người dùng cuộn chuột thay vì bấm trang
                             // pagination={{ pageSize: 5, ... }} 
                             renderItem={item => (
                                 <List.Item style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
@@ -226,7 +216,7 @@ const DashboardHome = () => {
                 </Card>
                 </Col>
 
-                {/* === CỘT PHẢI (NHỎ): Biểu đồ tròn & Sự kiện đang diễn ra === */}
+                {/* === Biểu đồ tròn & Sự kiện đang diễn ra === */}
                 <Col xs={24} lg={8}>
                     {/* 1. Biểu đồ Tròn */}
                     <Card title={<span><PieChartOutlined style={{color: '#ef44efff', marginRight: 8}}/> Tỷ lệ tham gia theo chủ đề</span>} bordered={false} style={{ borderRadius: 12, marginBottom: 16 }}>
@@ -236,16 +226,15 @@ const DashboardHome = () => {
                         </div>
                     </Card>
 
-                    {/* 2. Sự kiện đang diễn ra (MỚI) */}
+                    {/* 2. Sự kiện đang diễn ra */}
                     <Card 
                         title={<span><BellOutlined style={{color: '#ef4444', marginRight: 8}}/> Sự kiện đang diễn ra</span>} 
                         bordered={false} 
                         style={{ borderRadius: 12 }}
                     >
-                        {/* === TẠO DIV BAO NGOÀI ĐỂ CỐ ĐỊNH CHIỀU CAO === */}
                         <div style={{ 
-                            height: '300px', // Chiều cao cố định (bạn có thể chỉnh 250px, 400px tùy ý)
-                            overflowY: 'auto', // Hiện thanh cuộn dọc nếu danh sách dài
+                            height: '300px',
+                            overflowY: 'auto',
                             overflowX: 'hidden' 
                         }}>
                             <List
@@ -273,7 +262,6 @@ const DashboardHome = () => {
                                 </div>
                             )}
                         </div>
-                        {/* === KẾT THÚC DIV === */}
                     </Card>
                 </Col>
             </Row>

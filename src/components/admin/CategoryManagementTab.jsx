@@ -18,7 +18,6 @@ const CategoryManagementTab = ({ categories, loading, viewMode = 'list', onSave,
         setIsModalVisible(false);
     };
 
-    // Columns cho List
     const listColumns = [
         { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
         { title: 'Tên Danh mục', dataIndex: 'tenDanhMuc', key: 'tenDanhMuc' },
@@ -28,8 +27,8 @@ const CategoryManagementTab = ({ categories, loading, viewMode = 'list', onSave,
         {
             title: 'Hành động', 
             key: 'action', 
-            width: 180,       // Đặt chiều rộng cố định đủ cho các nút
-            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            width: 180,
+            fixed: 'right',
             align: 'center',
             render: (_, record) => (
                 <Space size="large">
@@ -42,15 +41,14 @@ const CategoryManagementTab = ({ categories, loading, viewMode = 'list', onSave,
         }
     ];
 
-    // Columns cho Trash
     const trashColumns = [
         { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
         { title: 'Tên Danh mục', dataIndex: 'tenDanhMuc', key: 'tenDanhMuc' },
         {
             title: 'Hành động', 
             key: 'action', 
-            width: 180,       // Đặt chiều rộng cố định đủ cho các nút
-            fixed: 'right',   // <<< QUAN TRỌNG: Gim cột sang phải
+            width: 180,
+            fixed: 'right',
             align: 'center',
             render: (_, record) => (
                 <Space size="large">

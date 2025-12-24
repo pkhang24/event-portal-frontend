@@ -25,7 +25,7 @@ const CreateEventPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [form] = Form.useForm();
-    const BE_URL = "http://localhost:8080/uploads"; // Đổi port nếu cần
+    const BE_URL = "http://localhost:8080/uploads";
     
     // Lấy dữ liệu khi sửa
     const { formData, isEdit } = location.state || {};
@@ -63,20 +63,19 @@ const CreateEventPage = () => {
         getCategories().then(setCategories).catch(console.error);
     }, []);
 
-    // === 1. LOGIC ĐIỀN DỮ LIỆU KHI SỬA (FIX LỖI MẤT DỮ LIỆU) ===
+    // === LOGIC ĐIỀN DỮ LIỆU KHI SỬA ===
     useEffect(() => {
         if (formData) {
-            // Fill dữ liệu vào form (Map thủ công để đảm bảo chính xác)
             form.setFieldsValue({
                 tieuDe: formData.tieuDe,
                 moTaNgan: formData.moTaNgan,
                 noiDung: formData.noiDung,
                 diaDiem: formData.diaDiem,
                 soLuongGioiHan: formData.soLuongGioiHan,
-                // Lấy ID danh mục (nếu backend trả về object category thì lấy .id)
+                // Lấy ID danh mục
                 categoryId: formData.categoryId || (formData.category ? formData.category.id : null),
                 
-                // Chuyển đổi ngày tháng (Antd cần undefined nếu null)
+                // Chuyển đổi ngày tháng
                 thoiGianBatDau: formData.thoiGianBatDau ? dayjs(formData.thoiGianBatDau) : undefined,
                 thoiGianKetThuc: formData.thoiGianKetThuc ? dayjs(formData.thoiGianKetThuc) : undefined,
             });
@@ -105,7 +104,7 @@ const CreateEventPage = () => {
         }
     }, [formData, form]);
 
-    // === 2. XỬ LÝ SUBMIT (FIX LỖI NGÀY THÁNG & VALIDATION) ===
+    // === XỬ LÝ SUBMIT ===
     const handleSubmit = async (statusType) => {
         setLoading(true);
         try {
@@ -128,7 +127,7 @@ const CreateEventPage = () => {
             if (values.categoryId) formDataSubmit.append('categoryId', values.categoryId);
             formDataSubmit.append('trangThai', statusType);
 
-            // Gửi file (Chỉ gửi nếu là file mới upload từ máy tính - có originFileObj)
+            // Gửi file
             if (thumbnailFileList.length > 0 && thumbnailFileList[0].originFileObj) {
                 formDataSubmit.append('image', thumbnailFileList[0].originFileObj); 
             }
@@ -150,7 +149,6 @@ const CreateEventPage = () => {
 
         } catch (error) {
             console.error("Lỗi submit:", error);
-            // Nếu lỗi validate fields, Antd tự hiện đỏ, không cần message error
             if (!error.errorFields) {
                 message.error('Có lỗi hệ thống xảy ra.');
             }
@@ -159,7 +157,7 @@ const CreateEventPage = () => {
         }
     };
 
-    // Helper: Chặn auto upload
+    // Chặn auto upload
     const beforeUpload = (file) => {
         const isJpgOrPng = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
         if (!isJpgOrPng) message.error('Chỉ hỗ trợ file ảnh!');
@@ -229,12 +227,12 @@ const CreateEventPage = () => {
         }
     `;
 
-    // === 3. CHUẨN BỊ DỮ LIỆU XEM TRƯỚC (DÙNG MODAL) ===
+    // === CHUẨN BỊ DỮ LIỆU XEM TRƯỚC ===
     const handleOpenPreview = async () => {
         try {
             const values = await form.validateFields();
             
-            // Xử lý link ảnh để hiển thị (Ưu tiên Blob URL của file mới)
+            // Xử lý link ảnh để hiển thị
             let thumbUrl = null;
             if (thumbnailFileList.length > 0) {
                 const file = thumbnailFileList[0];
@@ -247,7 +245,6 @@ const CreateEventPage = () => {
                 coverUrl = file.url || (file.originFileObj ? URL.createObjectURL(file.originFileObj) : null);
             }
             
-            // Ảnh bìa ưu tiên: Cover -> Thumbnail -> Placeholder
             const displayBanner = coverUrl || thumbUrl || "https://placehold.co/1200x400/1677ff/ffffff?text=Event+Banner";
 
             const selectedCategory = categories.find(c => c.id === values.categoryId);
@@ -258,7 +255,6 @@ const CreateEventPage = () => {
                 displayBanner: displayBanner, 
                 tenNguoiDang: currentUser?.hoTen || 'Tôi',
                 tenDanhMuc: selectedCategory?.tenDanhMuc || 'Danh mục',
-                // Giữ nguyên object Dayjs để format trong UI
                 thoiGianBatDau: values.thoiGianBatDau,
                 thoiGianKetThuc: values.thoiGianKetThuc,
             });
@@ -269,7 +265,7 @@ const CreateEventPage = () => {
         }
     };
 
-    // === HÀM RENDER NỘI DUNG DRAGGER (DẠNG Ô VUÔNG NHỎ) ===
+    // === HÀM RENDER NỘI DUNG DRAGGER ===
     const renderDraggerContent = (fileList, icon = <CloudUploadOutlined />) => {
         if (fileList.length > 0) {
             const file = fileList[0];
@@ -293,7 +289,7 @@ const CreateEventPage = () => {
             );
         }
         
-        // Giao diện khi chưa có ảnh (Tối giản cho ô vuông nhỏ)
+        // Giao diện khi chưa có ảnh
         return (
             <div style={{ marginTop: 8 }}>
                 <p className="ant-upload-drag-icon" style={{ marginBottom: 8, fontSize: 20 }}>{icon}</p>
@@ -312,13 +308,11 @@ const CreateEventPage = () => {
                     <Title level={2} style={{ marginTop: 0 }}>{isEdit ? "Chỉnh Sửa Sự Kiện" : "Tạo Sự Kiện Mới"}</Title>
                 </div>
 
-                {/* SỬA LỖI VALIDATION: Bỏ onFinish ở Form, xử lý thủ công ở Button */}
                 <Form form={form} layout="vertical" size="large" autoComplete="off">
                     <Row gutter={24}>
                         <Col xs={24} lg={16}>
                             <Card title="Thông tin chung" bordered={false} style={{ marginBottom: 24, borderRadius: 8 }}>
                                 
-                                {/* TÁCH BIỆT INPUT RA KHỎI DÒNG ĐỂ TRÁNH LỖI HTML */}
                                 <Form.Item name="tieuDe" label="Tên sự kiện" rules={[{ required: true, message: 'Vui lòng nhập tên sự kiện!' }]}>
                                     <Input placeholder="Ví dụ: Hội thảo AI" />
                                 </Form.Item>
@@ -350,22 +344,20 @@ const CreateEventPage = () => {
                                             onChange={(info) => handleFileChange(info, 'THUMB')}
                                             maxCount={1}
                                             showUploadList={false}
-                                            // Style ép về dạng ô vuông nhỏ
                                             style={{ 
-                                                width: 200,  // Cố định chiều rộng
-                                                height: 200, // Cố định chiều cao
+                                                width: 200,
+                                                height: 200,
                                                 border: thumbnailFileList.length > 0 ? 'none' : '1px dashed #d9d9d9',
                                                 background: '#fafafa',
                                                 borderRadius: '8px',
-                                                padding: 0,  // Xóa padding để ảnh tràn viền
+                                                padding: 0,
                                                 overflow: 'hidden',
-                                                display: 'block' // Quan trọng để Dragger nhận width/height
+                                                display: 'block'
                                             }}
                                         >
                                             {renderDraggerContent(thumbnailFileList)}
                                         </Dragger>
 
-                                        {/* Nút xóa nằm bên cạnh (hoặc bỏ nếu không cần) */}
                                         {thumbnailFileList.length > 0 && (
                                             <Button type="text" danger icon={<div style={{fontSize: 18}}>×</div>} onClick={() => setThumbnailFileList([])} />
                                         )}
@@ -381,9 +373,8 @@ const CreateEventPage = () => {
                                             onChange={(info) => handleFileChange(info, 'COVER')}
                                             maxCount={1}
                                             showUploadList={false}
-                                            // Style ép về dạng ô vuông nhỏ (có thể làm to hơn xíu vì là ảnh bìa)
                                             style={{ 
-                                                width: 200, // Hoặc 200 nếu muốn ảnh bìa to hơn Thumbnail
+                                                width: 200,
                                                 height: 200, 
                                                 border: coverFileList.length > 0 ? 'none' : '1px dashed #d9d9d9',
                                                 background: '#fafafa',
@@ -446,7 +437,7 @@ const CreateEventPage = () => {
                 </Form>
             </Content>
 
-            {/* === 4. MODAL XEM TRƯỚC (LAYOUT CHUẨN GIỐNG EVENT PAGE DETAIL) === */}
+            {/* === MODAL XEM TRƯỚC === */}
             <Modal
                 title="Xem trước sự kiện (Giao diện người dùng)"
                 open={isPreviewOpen}
@@ -458,7 +449,6 @@ const CreateEventPage = () => {
             >
                 {previewData && (
                     <div style={{ padding: '24px' }}>
-                        {/* BANNER: Dùng ảnh bìa, nếu không có thì dùng thumbnail */}
                         <div style={{ 
                             width: '100%', height: '100%', 
                             borderRadius: '16px', overflow: 'hidden', marginBottom: '40px',
@@ -491,7 +481,6 @@ const CreateEventPage = () => {
                                             <div 
                                                 className="ql-editor event-content-preview"
                                                 style={{ color: '#334155', fontSize: '16px', lineHeight: '1.8', overflowWrap: 'break-word' }}
-                                                // QUAN TRỌNG: Dùng dangerouslySetInnerHTML để hiển thị HTML từ Editor
                                                 dangerouslySetInnerHTML={{ __html: previewData.noiDung }} 
                                             />
                                         </div>

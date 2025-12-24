@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 const AdminBannerForm = ({ onSubmit, initialData = null }) => {
-    // 1. Thay đổi State quản lý ảnh
     const [title, setTitle] = useState(initialData?.title || '');
-    
-    // State cho file gốc để gửi lên server
     const [selectedFile, setSelectedFile] = useState(null);
-    
-    // State cho đường dẫn xem trước (Preview)
     const [previewUrl, setPreviewUrl] = useState(initialData?.imageUrl || '');
 
-    // Cleanup memory khi component bị hủy (tránh rò rỉ bộ nhớ do createObjectURL)
     useEffect(() => {
         return () => {
             if (previewUrl && previewUrl.startsWith('blob:')) {
@@ -19,7 +13,7 @@ const AdminBannerForm = ({ onSubmit, initialData = null }) => {
         };
     }, [previewUrl]);
 
-    // 2. Hàm xử lý khi chọn ảnh
+    // Hàm xử lý khi chọn ảnh
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -29,28 +23,24 @@ const AdminBannerForm = ({ onSubmit, initialData = null }) => {
         }
     };
 
-    // Hàm xóa ảnh đã chọn (hoặc ảnh cũ)
+    // Hàm xóa ảnh đã chọn
     const handleRemoveImage = () => {
         setSelectedFile(null);
         setPreviewUrl('');
     };
 
-    // 3. Hàm Submit form
+    // Submit form
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Dùng FormData để gửi file (Bắt buộc khi upload)
+        // Dùng FormData để gửi file
         const formData = new FormData();
         formData.append('title', title);
         
         if (selectedFile) {
             formData.append('image', selectedFile); 
-        } else if (previewUrl && !selectedFile) {
-            // Trường hợp sửa banner nhưng không đổi ảnh, backend cần logic xử lý riêng
-            // hoặc không gửi field 'image' để backend giữ nguyên ảnh cũ
-        }
+        } else if (previewUrl && !selectedFile)
 
-        // Gọi hàm từ props để xử lý API
         onSubmit(formData);
     };
 
@@ -73,12 +63,11 @@ const AdminBannerForm = ({ onSubmit, initialData = null }) => {
                 />
             </div>
 
-            {/* --- PHẦN QUAN TRỌNG: UPLOAD ẢNH --- */}
+            {/* --- UPLOAD ẢNH --- */}
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Hình ảnh Banner</label>
                 
                 {!previewUrl ? (
-                    // Giao diện khi CHƯA có ảnh
                     <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:bg-gray-50 cursor-pointer relative">
                         <div className="space-y-1 text-center">
                             <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -91,7 +80,7 @@ const AdminBannerForm = ({ onSubmit, initialData = null }) => {
                                         id="file-upload" 
                                         name="file-upload" 
                                         type="file" 
-                                        className="sr-only" // Ẩn input mặc định đi
+                                        className="sr-only"
                                         accept="image/*"
                                         onChange={handleImageChange}
                                     />
@@ -100,7 +89,7 @@ const AdminBannerForm = ({ onSubmit, initialData = null }) => {
                             </div>
                             <p className="text-xs text-gray-500">PNG, JPG, GIF tối đa 5MB</p>
                         </div>
-                        {/* Input phủ lên toàn bộ vùng để dễ click (optional) */}
+                        {/* Input phủ lên toàn bộ vùng để dễ click */}
                         <input 
                             type="file" 
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -109,12 +98,12 @@ const AdminBannerForm = ({ onSubmit, initialData = null }) => {
                         />
                     </div>
                 ) : (
-                    // Giao diện khi ĐÃ CÓ ảnh (Preview)
+                    // Preview
                     <div className="relative group w-full h-64 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                         <img 
                             src={previewUrl} 
                             alt="Banner Preview" 
-                            className="w-full h-full object-contain" // object-contain để nhìn thấy toàn bộ ảnh
+                            className="w-full h-full object-contain"
                         />
                         
                         {/* Nút xóa ảnh / Chọn lại */}

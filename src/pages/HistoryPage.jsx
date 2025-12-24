@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout, Typography, List, Card, Tag, Empty, Spin, Alert, Button } from 'antd';
 import { CalendarOutlined, EnvironmentOutlined, CheckCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
-import { getMyHistory } from '../services/registrationService'; // (hoặc service của bạn)
+import { getMyHistory } from '../services/registrationService';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -60,7 +60,6 @@ const HistoryPage = () => {
                                     <Tag icon={<CheckCircleOutlined />} color="success">
                                         Đã tham gia
                                     </Tag>
-                                    {/* (Không cần nút QR nữa vì đã qua) */}
                                 </Card>
                             </List.Item>
                         )}

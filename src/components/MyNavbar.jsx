@@ -16,7 +16,6 @@ import {
 import { getCurrentUser, logout } from '../services/authService';
 import NotificationBell from './NotificationBell';
 
-// Import Logo của bạn
 import logoImage from '../assets/logo-cnkt_white.png'; 
 
 const { Header } = Layout;
@@ -38,7 +37,6 @@ const MyNavbar = () => {
         navigate('/login'); 
     };
 
-    // Menu Dropdown của User
     const userMenuItems = [ 
         { key: 'profile', label: <Link to="/profile">Thông tin tài khoản</Link> },
         user?.role === 'STUDENT' && { key: 'my-tickets', label: <Link to="/my-tickets">Vé của tôi</Link> },
@@ -50,17 +48,15 @@ const MyNavbar = () => {
         { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, danger: true, onClick: handleLogout }
     ].filter(Boolean);
 
-    // Style cho Link điều hướng (Nav Links)
     const navLinkStyle = {
         color: '#333',
         fontWeight: 500,
         fontSize: '15px',
         cursor: 'pointer',
         transition: 'color 0.3s',
-        textDecoration: 'none' // Bỏ gạch chân mặc định
+        textDecoration: 'none'
     };
 
-    // Hàm render Link với logic active (tô màu khi đang ở trang đó)
     const NavItem = ({ to, children }) => {
         const isActive = location.pathname === to;
         return (
@@ -68,10 +64,10 @@ const MyNavbar = () => {
                 to={to} 
                 style={{ 
                     ...navLinkStyle, 
-                    color: isActive ? '#1677ff' : '#333', // Màu xanh nếu đang active
+                    color: isActive ? '#1677ff' : '#333',
                     fontWeight: isActive ? 700 : 500
                 }}
-                className="nav-hover-effect" // Class để CSS hover (xem bên dưới)
+                className="nav-hover-effect"
             >
                 {children}
             </Link>
@@ -84,18 +80,18 @@ const MyNavbar = () => {
             top: 0, 
             zIndex: 1000, 
             width: '100%', 
-            background: '#fff', // Nền trắng
+            background: '#fff',
             borderBottom: '1px solid #f0f0f0',
-            padding: '0 40px', // Padding rộng hơn chút
+            padding: '0 40px',
             display: 'flex', 
             alignItems: 'center',
-            justifyContent: 'space-between', // Đẩy 2 khối ra 2 đầu
-            height: '72px' // Tăng chiều cao Header một chút cho thoáng
+            justifyContent: 'space-between',
+            height: '72px'
         }}>
             
-            {/* === KHỐI BÊN TRÁI: LOGO + TÌM KIẾM === */}
+            {/* === LOGO + TÌM KIẾM === */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
-                {/* 1. Logo */}
+                {/* Logo */}
                 <div 
                     className="logo" 
                     style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
@@ -108,7 +104,7 @@ const MyNavbar = () => {
                     />
                 </div>
 
-                {/* 2. Thanh tìm kiếm (Nằm gần logo & Nổi bật) */}
+                {/* Thanh tìm kiếm */}
                 <Input 
                     placeholder="Tìm kiếm sự kiện..." 
                     prefix={<SearchOutlined style={{ color: '#9ca3af', fontSize: '18px' }} />}
@@ -116,40 +112,37 @@ const MyNavbar = () => {
                     style={{ 
                         width: '400px', 
                         borderRadius: '8px',
-                        background: '#f3f4f6', // Nền xám nhạt để nổi bật trên nền trắng
-                        border: '1px solid transparent', // Bỏ viền đen
+                        background: '#f3f4f6',
+                        border: '1px solid transparent',
                         padding: '8px 12px',
                         fontSize: '14px'
                     }}
-                    // Thêm hiệu ứng focus
                     // onFocus={(e) => e.target.style.background = '#fff'}
                     // onBlur={(e) => e.target.style.background = '#f3f4f6'}
                 />
             </div>
 
-            {/* === KHỐI BÊN PHẢI: NAV LINKS + USER INFO === */}
+            {/* === NAV LINKS + USER INFO === */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
                 
-                {/* 3. Các mục điều hướng (Trang chủ, Sự kiện, Giới thiệu) */}
-                <div style={{ display: 'flex', gap: '40px' }}> {/* Dùng Flexbox thay vì Space để dễ chỉnh */}
+                <div style={{ display: 'flex', gap: '40px' }}>
                     <NavItem to="/">Trang chủ</NavItem>
                     <NavItem to="/events">Sự kiện</NavItem>
                     <NavItem to="/about">Giới thiệu</NavItem>
                 </div>
 
-                {/* Vách ngăn nhỏ */}
                 <div style={{ width: '1px', height: '24px', background: '#e5e7eb' }}></div>
 
-                {/* 4. Thông tin User / Nút Đăng nhập */}
+                {/* Thông tin User / Nút Đăng nhập */}
                 {user ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        {/* Icon thông báo (trang trí thêm cho đẹp) */}
+
                         <NotificationBell />
 
                         <Dropdown 
                             menu={{ items: userMenuItems }} 
                             trigger={['hover']}
-                            arrow={true} // Mũi tên
+                            arrow={true} 
                             placement="bottomRight"
                         >
                             <a onClick={(e) => e.preventDefault()} style={{ color: '#333', cursor: 'pointer' }}>
@@ -158,7 +151,6 @@ const MyNavbar = () => {
                                         width: '32px', height: '32px', background: '#1677ff', color: '#fff', 
                                         borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600
                                     }}>
-                                        {/* Lấy chữ cái đầu của tên làm Avatar */}
                                         {user.hoTen ? user.hoTen.charAt(0).toUpperCase() : 'U'}
                                     </div>
                                     <span style={{ fontWeight: 500 }}>{user.hoTen}</span>

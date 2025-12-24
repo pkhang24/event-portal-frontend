@@ -31,12 +31,12 @@ const AdminLayout = () => {
             label: <Link to="/admin">Tổng quan</Link>,
         },
         {
-            type: 'divider', // Đường kẻ phân cách
+            type: 'divider',
         },
         {
             key: 'quan-ly', 
             label: 'QUẢN LÝ', 
-            type: 'group', // Nhóm tiêu đề nhỏ
+            type: 'group'
             children: [
                 {
                     key: '/admin/users',
@@ -83,12 +83,12 @@ const AdminLayout = () => {
                 trigger={null} 
                 collapsible 
                 collapsed={collapsed} 
-                theme="light" // Hoặc 'dark' nếu bạn thích màu tối
+                theme="light"
                 width={260} 
                 style={{ 
-                    boxShadow: '2px 0 8px 0 rgba(29,35,41,.05)', // Tạo bóng đổ nhẹ sang phải
+                    boxShadow: '2px 0 8px 0 rgba(29,35,41,.05)',
                     zIndex: 10,
-                    borderRight: 'none' // Bỏ viền mặc định
+                    borderRight: 'none'
                 }} 
             >
                 {/* === LOGO AREA === */}
@@ -114,31 +114,30 @@ const AdminLayout = () => {
                     theme="light"
                     mode="inline"
                     selectedKeys={[location.pathname]}
-                    defaultOpenKeys={['quan-ly']} // Mặc định mở nhóm Quản lý
+                    defaultOpenKeys={['quan-ly']}
                     items={menuItems}
                     style={{ 
                         borderRight: 0,
-                        padding: '0 8px' // Thêm padding 2 bên cho menu
+                        padding: '0 8px'
                     }}
-                    // Tùy chỉnh class CSS (cần thêm vào file CSS)
                     className="custom-admin-menu"
                 />
             </Sider>
 
             <Layout style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-                {/* === SỬA HEADER TẠI ĐÂY === */}
+                {/* === HEADER === */}
                 <Header style={{ 
                     padding: '0 24px', 
                     background: '#fff', 
                     display: 'flex', 
                     alignItems: 'center', 
-                    justifyContent: 'space-between', // Đẩy 2 phần tử con ra 2 đầu
+                    justifyContent: 'space-between'
                     boxShadow: '0 1px 4px rgba(0,0,0,0.05)', 
                     flexShrink: 0, 
                     zIndex: 1 
                 }}>
                     
-                    {/* 1. Phần tử bên TRÁI: Nút menu */}
+                    {/* Left Menu */}
                     <Button
                         type="text"
                         icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -146,10 +145,9 @@ const AdminLayout = () => {
                         style={{ fontSize: '16px', width: 64, height: 64 }}
                     />
 
-                    {/* 2. Phần tử bên PHẢI: Gom Chuông và Avatar vào chung 1 div */}
+                    {/* Right Components  */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                         
-                        {/* Cái Chuông */}
                         <NotificationBell />
 
                         {/* Avatar User */}
@@ -168,7 +166,7 @@ const AdminLayout = () => {
 
                 <Content style={{ 
                     margin: '24px', 
-                    padding: 0, // Bỏ padding ở đây để nội dung con tự lo
+                    padding: 0,
                     minHeight: 280, 
                     overflowY: 'auto',
                     overflowX: 'hidden',

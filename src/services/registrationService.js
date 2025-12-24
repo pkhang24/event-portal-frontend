@@ -1,7 +1,5 @@
-// Trong src/services/api.js (hoặc tạo file registrationService.js)
 import api from './api';
 
-// ... (các hàm service khác)
 // Hủy đăng ký vé
 export const cancelRegistration = async (registrationId) => {
     await api.delete(`/registrations/${registrationId}`);

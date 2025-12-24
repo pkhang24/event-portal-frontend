@@ -15,26 +15,16 @@ const LoginPage = () => {
         setLoading(true);
         setError(null);
         try {
-            // 1. Gọi API đăng nhập
             const data = await login(values.email, values.password);
-            
-            // 2. Lưu token vào localStorage
             localStorage.setItem('token', data.token);
-            
             message.success("Đăng nhập thành công!");
 
-            // === 3. PHÂN LUỒNG ĐIỀU HƯỚNG (LOGIC MỚI) ===
-            // Lấy thông tin user từ token vừa lưu
             const currentUser = getCurrentUser();
-
             if (currentUser?.role === 'ADMIN') {
-                // Nếu là Admin -> Vào thẳng Dashboard
                 navigate('/admin'); 
             } else {
-                // Nếu là Student hoặc Poster -> Ra Trang chủ
                 navigate('/'); 
             }
-            // ============================================
 
         } catch (err) {
             setError(err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại.");
@@ -49,7 +39,6 @@ const LoginPage = () => {
             justifyContent: 'center', 
             alignItems: 'center', 
             minHeight: '100vh', 
-            // Hình nền sự kiện mờ (bạn có thể thay link ảnh khác)
             backgroundImage: 'linear-gradient(rgba(75, 249, 255, 0.5), rgba(36, 8, 196, 0.51))',
             backgroundSize: 'cover',
             backgroundPosition: 'center'
@@ -58,21 +47,19 @@ const LoginPage = () => {
             <Card 
                 style={{ 
                     width: 420, 
-                    borderRadius: '16px', // Bo góc mềm mại
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)', // Đổ bóng
-                    background: 'rgba(255, 255, 255, 0.95)', // Nền trắng hơi trong suốt
+                    borderRadius: '16px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+                    background: 'rgba(255, 255, 255, 0.95)',
                     border: 'none',
                     padding: '20px'
                 }}
             >
-                {/* Nút quay lại trang chủ */}
                 <div style={{ marginBottom: 20 }}>
                     <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', color: '#666' }}>
                         <HomeOutlined style={{ marginRight: 5 }} /> Về trang chủ
                     </Link>
                 </div>
 
-                {/* Logo và Tiêu đề */}
                 <div style={{ textAlign: 'center', marginBottom: 30 }}>
                     <div style={{ 
                         width: 60, height: 60, background: '#1677ff', borderRadius: '50%', 

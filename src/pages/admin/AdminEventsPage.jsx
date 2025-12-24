@@ -5,7 +5,7 @@ import {
     AppstoreOutlined, ExclamationCircleOutlined,
     CalendarOutlined, EnvironmentOutlined, UserOutlined, TeamOutlined, CheckOutlined
 } from '@ant-design/icons';
-import dayjs from 'dayjs'; // Import dayjs để format ngày
+import dayjs from 'dayjs';
 import EventManagementTab from '../../components/admin/EventManagementTab';
 import { 
     getAllEventsForAdmin, approveEvent, rejectEvent, cancelEvent, 
@@ -33,14 +33,13 @@ const AdminEventsPage = () => {
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [modalLoading, setModalLoading] = useState(false);
 
-    // --- 1. STATE CHO PREVIEW MODAL (MỚI) ---
+    // --- 1. STATE PREVIEW MODAL ---
     const [previewEvent, setPreviewEvent] = useState(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     
     // URL Backend để load ảnh
     const BE_URL = "http://localhost:8080/uploads"; 
 
-    // --- FETCH DATA ---
     const fetchEvents = async () => {
         setLoading(true);
         try {
@@ -68,12 +67,11 @@ const AdminEventsPage = () => {
         return `${BE_URL}/${imgName}`;
     };
 
-    // --- CÁC HÀNH ĐỘNG ---
     const handleApprove = async (id) => {
         try { 
             await approveEvent(id); 
             message.success("Đã duyệt!"); 
-            setIsPreviewOpen(false); // Đóng preview nếu đang mở
+            setIsPreviewOpen(false);
             fetchEvents(); 
         } 
         catch (e) { message.error("Lỗi duyệt bài"); }
@@ -85,7 +83,7 @@ const AdminEventsPage = () => {
         setActionType(type);
         setReason('');
         setIsModalVisible(true);
-        setIsPreviewOpen(false); // Đóng preview nếu đang mở
+        setIsPreviewOpen(false);
     };
 
     const handleModalOk = async () => {
@@ -111,13 +109,11 @@ const AdminEventsPage = () => {
         }
     };
 
-    // --- 2. HÀM MỞ PREVIEW (MỚI) ---
     const handlePreview = (event) => {
         setPreviewEvent(event);
         setIsPreviewOpen(true);
     };
 
-    // --- LỌC DỮ LIỆU ---
     const getDataSource = () => {
         let source = [];
         if (activeTab === 'TRASH') source = trashEvents;
@@ -199,8 +195,6 @@ const AdminEventsPage = () => {
                 onApprove={handleApprove} 
                 onReject={(id) => openActionModal(id, 'REJECT')}
                 onCancelEvent={(id) => openActionModal(id, 'CANCEL')}
-                
-                // === TRUYỀN HÀM PREVIEW XUỐNG ===
                 onPreview={handlePreview}
             />
 
@@ -225,7 +219,7 @@ const AdminEventsPage = () => {
                 <TextArea rows={4} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Nhập lý do..." />
             </Modal>
 
-            {/* === 3. MODAL PREVIEW (XEM TRƯỚC SỰ KIỆN) === */}
+            {/* === 3. MODAL PREVIEW === */}
             <Modal
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -239,7 +233,6 @@ const AdminEventsPage = () => {
                 style={{ top: 20 }}
                 footer={[
                     <Button key="close" onClick={() => setIsPreviewOpen(false)}>Đóng</Button>,
-                    // Nếu đang PENDING thì hiện nút Duyệt ngay trong Modal cho tiện
                     previewEvent?.trangThai === 'PENDING' && (
                         <Button 
                             key="approve" 
@@ -271,14 +264,12 @@ const AdminEventsPage = () => {
                         }}>
                              <img
                                 alt={previewEvent.tieuDe}
-                                // Ưu tiên ảnh bìa, nếu không có lấy thumbnail
                                 src={getImageUrl(previewEvent.anhBia || previewEvent.anhThumbnail)}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                         </div>
 
                         <Row gutter={[32, 24]}>
-                            {/* CỘT TRÁI: NỘI DUNG */}
                             <Col xs={24} lg={16}>
                                 <Card bordered={false} style={{ borderRadius: '12px' }}>
                                     <Title level={2} style={{ marginTop: 0 }}>{previewEvent.tieuDe}</Title>
@@ -292,7 +283,6 @@ const AdminEventsPage = () => {
                                 </Card>
                             </Col>
 
-                            {/* CỘT PHẢI: THÔNG TIN */}
                             <Col xs={24} lg={8}>
                                 <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                                     <Space direction="vertical" size={20} style={{ width: '100%' }}>
@@ -327,7 +317,6 @@ const AdminEventsPage = () => {
                                             <div>
                                                 <div style={{ fontSize: 12, color: '#888' }}>Chủ đề</div>
                                                 <Tag color="blue" style={{ margin: 0, fontWeight: 500 }}>
-                                                    {/* Xử lý hiển thị tên danh mục an toàn */}
                                                     {previewEvent.tenDanhMuc || previewEvent.category?.tenDanhMuc || 'Chưa phân loại'}
                                                 </Tag>
                                             </div>

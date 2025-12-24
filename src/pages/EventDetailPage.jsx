@@ -34,14 +34,12 @@ const EventDetailPage = () => {
 
     useEffect(() => {
         const fetchEvent = async () => {
-            // 1. NẾU LÀ CHẾ ĐỘ XEM TRƯỚC
             if (isPreviewMode && location.state?.previewData) {
                 setEvent(location.state.previewData);
                 setLoading(false);
-                return; // Dừng, không gọi API
+                return;
             }
 
-            // 2. NẾU LÀ CHẾ ĐỘ THƯỜNG (Có ID thật)
             if (id && id !== 'preview') {
                 try {
                     const data = await getEventDetail(id);
@@ -81,16 +79,15 @@ const EventDetailPage = () => {
 
     const fallbackImage = "https://placehold.co/1200x400/1677ff/ffffff?text=Event+Banner";
 
-    // === 1. THÊM LOGIC KIỂM TRA THỜI GIAN ===
+    // === THÊM LOGIC KIỂM TRA THỜI GIAN ===
     const now = new Date();
     const startTime = new Date(event.thoiGianBatDau);
     const endTime = new Date(event.thoiGianKetThuc);
 
-    const isUpcoming = startTime > now; // Sắp diễn ra (Được đăng ký)
+    const isUpcoming = startTime > now; // Sắp diễn ra
     const isEnded = endTime < now;      // Đã kết thúc
     const isOngoing = startTime <= now && endTime >= now; // Đang diễn ra
 
-    // Định nghĩa CSS để fix lỗi khoảng cách và ảnh to
     const eventContentStyle = `
         /* Class bao quanh nội dung */
         .event-content-view {
@@ -148,7 +145,6 @@ const EventDetailPage = () => {
                     type="warning" 
                     showIcon 
                     
-                    // === SỬA NÚT HÀNH ĐỘNG TẠI ĐÂY ===
                     action={
                         source === 'list' ? (
                             // TRƯỜNG HỢP 1: Đến từ Danh sách quản lý -> Quay về danh sách
@@ -156,7 +152,7 @@ const EventDetailPage = () => {
                                 Quay lại quản lý
                             </Button>
                         ) : (
-                            // TRƯỜNG HỢP 2: Đến từ Form tạo -> Quay về sửa tiếp (Logic cũ)
+                            // TRƯỜNG HỢP 2: Đến từ Form tạo -> Quay về sửa tiếp
                             <Button size="large" type="primary" onClick={() => {
                                 navigate('/create-event', { state: { formData: event } });
                             }}>
@@ -164,7 +160,6 @@ const EventDetailPage = () => {
                             </Button>
                         )
                     }
-                    // =================================
                     
                     style={{ marginBottom: 20, borderRadius: 0 }}
                 />
@@ -192,8 +187,6 @@ const EventDetailPage = () => {
                 }}>
                      <img
                         alt={event.tieuDe}
-                        // Logic: Nếu link bắt đầu bằng http (link mạng) thì giữ nguyên
-                        // Nếu không thì ghép domain backend vào
                         src={
                             event.anhBia 
                             ? (event.anhBia.startsWith('http') ? event.anhBia : `${BE_URL}/${event.anhBia}`) 
@@ -215,7 +208,7 @@ const EventDetailPage = () => {
                                 borderRadius: '16px', 
                                 // border: '1px solid #334155' 
                             }}
-                            bodyStyle={{ padding: '32px' }} // Tăng padding bên trong cho thoáng
+                            bodyStyle={{ padding: '32px' }}
                         >
                             <Typography>
                                 <Title level={1} style={{ color: '#334155', fontSize: '32px', marginTop: 0, marginBottom: 16 }}>
@@ -233,7 +226,6 @@ const EventDetailPage = () => {
                                 <div style={{ marginBottom: 40 }}>
                                     <Title level={4} style={{ color: '#334155', marginBottom: 16 }}>Mô tả chi tiết</Title>
                                     
-                                    {/* === FIX LỖI TRÀN CHỮ === */}
                                     <div 
                                     
                                         className="event-content-view event-content-dark"
@@ -241,7 +233,6 @@ const EventDetailPage = () => {
                                             color: '#334155', 
                                             fontSize: '16px', 
                                             lineHeight: '1.8',
-                                            // Các thuộc tính CSS quan trọng để chống tràn:
                                             overflowWrap: 'break-word', 
                                             wordWrap: 'break-word',
                                             wordBreak: 'break-word',
@@ -254,7 +245,7 @@ const EventDetailPage = () => {
                         </Card>
                     </Col>
 
-                    {/* === CỘT PHẢI: THẺ ĐĂNG KÝ STICKY (Giữ nguyên style cũ) === */}
+                    {/* === CỘT PHẢI: THẺ ĐĂNG KÝ STICKY === */}
                     <Col xs={24} lg={8}>
                         <div style={{ top: 24 }}>
                             <div style={{ 
@@ -264,14 +255,13 @@ const EventDetailPage = () => {
                                 border: '1px solid #ffffffff',
                                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
                             }}>
-                                {/* === 2. SỬA NÚT ĐĂNG KÝ TẠI ĐÂY === */}
                                 <Button 
                                     type="primary" 
                                     size="large" 
                                     block 
                                     style={{ 
                                         height: '48px', fontSize: '16px', fontWeight: 'bold', marginBottom: 24,
-                                        background: isUpcoming ? '#2563eb' : '#475569', // Đổi màu nếu không phải sắp diễn ra
+                                        background: isUpcoming ? '#2563eb' : '#475569',
                                         borderColor: isUpcoming ? '#2563eb' : '#475569',
                                         color: '#fff'
                                     }}
@@ -281,10 +271,9 @@ const EventDetailPage = () => {
                                     // 1. Chưa đăng nhập
                                     // 2. Không phải STUDENT
                                     // 3. Đã đăng ký rồi
-                                    // 4. Sự kiện KHÔNG PHẢI là "Sắp diễn ra" (tức là đang diễn ra hoặc đã kết thúc)
+                                    // 4. Sự kiện KHÔNG PHẢI là "Sắp diễn ra"
                                     disabled={!user || user.role !== 'STUDENT' || event.isRegistered || !isUpcoming || isPreviewMode} 
                                 >
-                                    {/* Logic hiển thị chữ trên nút */}
                                     {isPreviewMode ? 'Đây là bản xem trước' : 
                                     (!user ? 'Đăng nhập để tham gia' : 
                                       (user.role !== 'STUDENT' ? 'Chỉ dành cho sinh viên' : 
@@ -323,8 +312,7 @@ const EventDetailPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* 1. Người đăng (SỬA LẠI) */}
-                                    {/* Kiểm tra event.tenNguoiDang thay vì event.nguoiDang */}
+                                    {/* 1. Người đăng */}
                                     {event.tenNguoiDang && (
                                         <div style={{ display: 'flex', gap: 16 }}>
                                             <div style={{ width: 40, height: 40, background: '#13c2c2', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -338,8 +326,7 @@ const EventDetailPage = () => {
                                         </div>
                                     )}
 
-                                    {/* 2. Chủ đề (SỬA LẠI) */}
-                                    {/* Kiểm tra event.tenDanhMuc */}
+                                    {/* 2. Chủ đề*/}
                                     {event.tenDanhMuc && (
                                         <div style={{ display: 'flex', gap: 16 }}>
                                             <div style={{ width: 40, height: 40, background: '#722ed1', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -356,7 +343,7 @@ const EventDetailPage = () => {
                                         </div>
                                     )}
 
-                                    {/* Số người tham gia (Đã fix ở bước trước) */}
+                                    {/* Số người tham gia */}
                                     <div style={{ display: 'flex', gap: 16 }}>
                                         <div style={{ width: 40, height: 40, background: '#20eb6eff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                             <TeamOutlined style={{ fontSize: '20px', color: '#fff' }} />

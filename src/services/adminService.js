@@ -25,25 +25,22 @@ export const updateUserRole = async (userId, newRole) => {
     return response.data;
 };
 
-// Tạo User mới (API này bạn đã tạo ở backend)
+// Tạo User mới
 export const createUser = (userData) => {
     return api.post('/admin/users', userData);
 };
 
-// Sửa thông tin User (API vừa tạo)
+// Sửa thông tin User
 export const updateUser = (userId, userData) => {
     return api.put(`/admin/users/${userId}`, userData);
 };
 
-// Xóa mềm User (API này đã có, gọi vào /api/admin/users/{id} là sai, phải gọi API chung)
-// Hãy sửa lại API backend cho việc xóa mềm User nếu bạn chưa có
-// Giả sử API xóa mềm user là: DELETE /api/admin/users/{id}
+// Xóa mềm User 
 export const softDeleteUser = (userId) => {
-    // API này chúng ta đã tạo ở Backend (Step 1.1)
-    // Nó dùng annotation @SQLDelete nên chỉ cần gọi DELETE là tự động soft-delete
     return api.delete(`/admin/users/${userId}`); 
 };
 
+// Mở khóa/Khoá User
 export const toggleUserLock = async (userId) => {
     await api.put(`/admin/users/${userId}/lock`);
 };
@@ -53,12 +50,12 @@ export const approveEvent = async (eventId) => {
     await api.put(`/admin/events/${eventId}/approve`);
 };
 
-// Từ chối sự kiện (PENDING -> DRAFT)
+// Từ chối sự kiện (PENDING > DRAFT)
 export const rejectEvent = async (id, reason = "") => {
     await api.put(`/admin/events/${id}/reject`, { reason });
 };
 
-// Hủy sự kiện (PUBLISHED -> CANCELLED)
+// Hủy sự kiện (PUBLISHED > CANCELLED)
 export const cancelEvent = async (id, reason = "") => {
     await api.put(`/admin/events/${id}/cancel`, { reason });
 };
@@ -69,30 +66,30 @@ export const getEventStats = async () => {
     return response.data;
 };
 
+// Lấy thống kê sự kiện theo top
 export const getTopEventStats = async (year, month) => {
-    // Tạo query params
     const params = new URLSearchParams();
     params.append('year', year);
-    if (month > 0) { // Chỉ thêm 'month' nếu nó khác 0 (Cả năm)
+    if (month > 0) { // Chỉ thêm 'month' nếu nó khác 0
         params.append('month', month);
     }
 
-    // Gọi API
     const response = await api.get(`/admin/stats/top-events?${params.toString()}`);
     return response.data;
 };
 
+// Lấy thống kê sự kiện theo tháng
 export const getMonthlyEventStats = async (year) => {
     const response = await api.get(`/admin/stats/monthly-events?year=${year}`);
     return response.data;
 };
 
+// Lấy thống kê theo danh mục
 export const getTopCategoryStats = async (year, month) => {
     const params = new URLSearchParams();
     params.append('year', year);
     if (month > 0) params.append('month', month);
     
-    // Gọi API với params
     const response = await api.get(`/admin/stats/top-categories?${params.toString()}`);
     return response.data;
 };
@@ -103,8 +100,7 @@ export const getAllEventsForAdmin = async () => {
     return response.data;
 };
 
-// adminService.js
-// API này trả về BLOB (File)
+// Tải báo cáo sự kiện dưới dạng file Excel
 export const downloadReport = async (year) => {
     return api.get(`/admin/report/events-excel?year=${year}`, {
         responseType: 'blob'
@@ -126,16 +122,13 @@ export const softDeleteCategory = (id) => {
     return api.delete(`/admin/categories/${id}`);
 };
 
-/// API Banner (Viết lại chuẩn)
+/// API Banner
 export const getAllBanners = async () => {
-    // Không cần /api ở đầu vì api instance đã có baseURL là /api rồi (hoặc proxy đã xử lý)
     const response = await api.get('/banners'); 
     return response.data;
 };
 
 export const createBanner = (formData) => {
-    // Chỉ cần gửi FormData, api instance tự lo Token
-    // Header Content-Type: multipart/form-data sẽ được axios tự động set khi thấy FormData
     return api.post('/banners', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
@@ -148,13 +141,13 @@ export const updateBanner = (id, formData) => {
 };
 
 export const softDeleteBanner = (id) => {
-    return api.delete(`/banners/${id}`); // Sửa path cho khớp controller
+    return api.delete(`/banners/${id}`);
 };
 
 // --- User Trash ---
 export const getDeletedUsers = async () => {
     const response = await api.get('/admin/users/trash');
-    return response.data; // <--- Phải chắc chắn có .data
+    return response.data;
 };
 export const restoreUser = (id) => api.post(`/admin/users/trash/${id}/restore`);
 export const permanentDeleteUser = (id) => api.delete(`/admin/users/trash/${id}/permanent`);

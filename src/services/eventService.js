@@ -3,7 +3,6 @@ import api from './api';
 // Gọi API lấy danh sách sự kiện public
 export const getPublicEvents = async (search, status, categoryId) => {
     try {
-        // Tạo query params
         const params = new URLSearchParams();
         if (search) params.append('search', search);
         if (status) params.append('status', status);
@@ -40,8 +39,8 @@ export const getCategories = async () => {
     return response.data;
 };
 
+// Tạo sự kiện với multipart/form-data
 export const createEvent = async (formData) => {
-    // Lưu ý: formData phải là instance của FormData, không phải object {}
     const response = await api.post('/events', formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -50,7 +49,7 @@ export const createEvent = async (formData) => {
     return response.data;
 };
 
-// Làm tương tự cho hàm updateEvent nếu có
+// Cập nhật sự kiện với multipart/form-data
 export const updateEvent = async (id, formData) => {
     const response = await api.put(`/events/${id}`, formData, {
         headers: {
@@ -60,7 +59,7 @@ export const updateEvent = async (id, formData) => {
     return response.data;
 };
 
-// Xóa mềm (Gọi API DELETE thường -> Backend @SQLDelete tự xử lý)
+// Xóa sự kiện (soft delete)
 export const softDeleteEvent = async (eventId) => {
     const response = await api.delete(`/events/${eventId}`); 
     return response.data;

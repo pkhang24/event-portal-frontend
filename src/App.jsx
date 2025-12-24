@@ -47,7 +47,6 @@ const AppContent = () => {
 
   return (
     <>
-      {/* Chỉ hiện MyNavbar ở các trang KHÔNG PHẢI Admin */}
       {/* {!isAdminRoute && <MyNavbar />} */}
 
       <Routes>

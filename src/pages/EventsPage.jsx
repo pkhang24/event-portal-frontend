@@ -4,7 +4,7 @@ import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import MyNavbar from '../components/MyNavbar';
 import MyFooter from '../components/MyFooter';
 import { getPublicEvents, getCategories } from '../services/eventService';
-import { CardComponent } from './HomePage'; // Tái sử dụng Card từ HomePage
+import { CardComponent } from './HomePage'; 
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -23,7 +23,7 @@ const EventsPage = () => {
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const pageSize = 12; // Số sự kiện mỗi trang
+    const pageSize = 12;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -45,24 +45,18 @@ const EventsPage = () => {
         fetchData();
     }, []);
 
-    // Logic Lọc và Sắp xếp dữ liệu
     useEffect(() => {
         let result = [...allEvents];
         const now = new Date();
 
-        // 1. Các bộ lọc (Giữ nguyên logic cũ của bạn)
         if (searchText) {
             result = result.filter(e => e.tieuDe.toLowerCase().includes(searchText.toLowerCase()));
         }
 
-        // SỬA ĐOẠN NÀY
         if (filterCategory !== 'all') {
             result = result.filter(e => {
-                // Lấy ID từ categoryId (phẳng) hoặc category.id (lồng nhau) để an toàn
-                const eventCatId = e.categoryId || (e.category ? e.category.id : null);
-                
-                // So sánh chuỗi để tránh lệch kiểu number/string
-                return String(eventCatId) === String(filterCategory);
+                const eventCatId = e.categoryId || (e.category ? e.category.id : null);  
+                 return String(eventCatId) === String(filterCategory);
             });
         }
         
@@ -74,22 +68,20 @@ const EventsPage = () => {
             result = result.filter(e => new Date(e.thoiGianKetThuc) < now);
         }
 
-        // 2. === SẮP XẾP (SORTING) - LOGIC MỚI ===
-        // Thứ tự ưu tiên: Đang diễn ra (1) -> Sắp diễn ra (2) -> Đã kết thúc (3)
+        // === SẮP XẾP ===
         result.sort((a, b) => {
             const getPriority = (event) => {
                 const start = new Date(event.thoiGianBatDau);
                 const end = new Date(event.thoiGianKetThuc);
                 
-                if (end < now) return 3; // Đã kết thúc (Ưu tiên thấp nhất)
-                if (start <= now && end >= now) return 1; // Đang diễn ra (Ưu tiên cao nhất)
-                return 2; // Sắp diễn ra (Ưu tiên nhì)
+                if (end < now) return 3; // Đã kết thúc
+                if (start <= now && end >= now) return 1; // Đang diễn ra
+                return 2; // Sắp diễn ra
             };
 
             const priorityA = getPriority(a);
             const priorityB = getPriority(b);
 
-            // Nếu khác độ ưu tiên, sắp xếp theo độ ưu tiên (1 -> 2 -> 3)
             if (priorityA !== priorityB) {
                 return priorityA - priorityB;
             }
@@ -105,7 +97,6 @@ const EventsPage = () => {
         setCurrentPage(1); 
     }, [searchText, filterCategory, filterStatus, allEvents]);
     
-    // Logic Phân trang
     const startIndex = (currentPage - 1) * pageSize;
     const currentEvents = filteredEvents.slice(startIndex, startIndex + pageSize);
 
@@ -115,13 +106,13 @@ const EventsPage = () => {
             
             <Content style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px 20px', width: '100%' }}>
                 
-                {/* Header của trang */}
+                {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: 40 }}>
                     <Title level={1}>Khám phá Sự kiện</Title>
                     <p style={{ color: '#666' }}>Tìm kiếm và tham gia các hoạt động bổ ích từ Khoa</p>
                 </div>
 
-                {/* Thanh Bộ Lọc (Filter Bar) */}
+                {/* Filter Bar */}
                 <div style={{ 
                     background: '#ffffffff', padding: '20px', borderRadius: '12px', 
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.10)', marginBottom: 30,

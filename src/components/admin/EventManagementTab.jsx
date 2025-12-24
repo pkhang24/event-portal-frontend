@@ -10,7 +10,7 @@ const EventManagementTab = ({
     onCancelEvent,
     onDelete, 
     onRestore,
-    onPreview // <--- 1. NHẬN THÊM HÀM NÀY
+    onPreview
 }) => {
 
     const listColumns = [
@@ -29,11 +29,11 @@ const EventManagementTab = ({
         {
             title: 'Hành động', 
             key: 'action',
-            width: 250, // Tăng chiều rộng chút để đủ chỗ
+            width: 250,
             align: 'center',
             render: (_, record) => (
                 <Space>
-                    {/* --- 2. THÊM NÚT XEM TRƯỚC --- */}
+                    {/* --- PREVIEW BUTTON --- */}
                     <Tooltip title="Xem chi tiết">
                         <Button 
                             icon={<EyeOutlined />} 
@@ -43,7 +43,7 @@ const EventManagementTab = ({
                         </Button>
                     </Tooltip>
 
-                    {/* NÚT DUYỆT */}
+                    {/* ALLOW BUTTON */}
                     {record.trangThai === 'PENDING' && (
                         <Tooltip title="Duyệt đăng">
                             <Button type="primary" icon={<CheckOutlined />} onClick={() => onApprove(record.id)}>
@@ -52,7 +52,7 @@ const EventManagementTab = ({
                         </Tooltip>
                     )}
 
-                    {/* NÚT TỪ CHỐI */}
+                    {/* DENINE BUTTON */}
                     {record.trangThai === 'PENDING' && (
                         <Button 
                             danger 
@@ -63,7 +63,7 @@ const EventManagementTab = ({
                         </Button>
                     )}
 
-                    {/* NÚT HỦY */}
+                    {/* CANCEL BUTTON */}
                     {record.trangThai === 'PUBLISHED' && (
                         <Button 
                             type="primary" 
@@ -80,7 +80,6 @@ const EventManagementTab = ({
         },
     ];
 
-    // Cột cho Thùng rác (Giữ nguyên, không cần nút xem)
     const trashColumns = [
         { title: 'Tiêu đề', dataIndex: 'tieuDe', key: 'tieuDe', width: '30%' },
         { title: 'Người tạo', dataIndex: 'tenNguoiDang', key: 'tenNguoiDang' },

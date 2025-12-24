@@ -17,10 +17,7 @@ const { Title, Text, Paragraph } = Typography;
 const MyFooter = () => {
     return (
         <Footer style={{ background: '#ffffffff', padding: '60px 50px 20px' }}>
-            {/* === PHẦN CHÍNH (4 CỘT) === */}
             <Row gutter={[40, 30]}>
-                
-                {/* CỘT 1: LOGO & GIỚI THIỆU */}
                 <Col xs={24} sm={12} md={6}>
                     <div style={{ marginBottom: 20 }}>
                         {/* Thay src bằng logoImage của bạn */}
@@ -38,7 +35,7 @@ const MyFooter = () => {
                     </div>
                 </Col>
 
-                {/* CỘT 2: NGÀNH ĐÀO TẠO */}
+                {/* NGÀNH ĐÀO TẠO */}
                 <Col xs={24} sm={12} md={6}>
                     <Title level={4} style={{ marginBottom: 20 }}>Ngành đào tạo</Title>
                     <Space direction="vertical" size={12} style={{ width: '100%' }}>
@@ -51,7 +48,7 @@ const MyFooter = () => {
                     </Space>
                 </Col>
 
-                {/* CỘT 3: LIÊN HỆ */}
+                {/* LIÊN HỆ */}
                 <Col xs={24} sm={12} md={6}>
                     <Title level={4} style={{ marginBottom: 20 }}>Liên hệ</Title>
                     <Space direction="vertical" size={12} style={{ width: '100%', color: '#555' }}>
@@ -62,7 +59,7 @@ const MyFooter = () => {
                     </Space>
                 </Col>
 
-                {/* CỘT 4: ĐĂNG KÝ NHẬN TIN */}
+                {/* ĐĂNG KÝ NHẬN TIN */}
                 <Col xs={24} sm={12} md={6}>
                     <Title level={4} style={{ marginBottom: 20 }}>Đăng ký nhận tin</Title>
                     <Paragraph style={{ color: '#555' }}>
@@ -97,7 +94,7 @@ const MyFooter = () => {
 
             <Divider style={{ margin: '40px 0 20px' }} />
 
-            {/* === PHẦN BOTTOM: COPYRIGHT === */}
+            {/* === COPYRIGHT === */}
             <Row justify="space-between" align="middle">
                 <Col xs={24} md={12} style={{ textAlign: 'left' }}>
                     <Text type="secondary">
@@ -114,7 +111,7 @@ const MyFooter = () => {
                 </Col>
             </Row>
 
-            {/* Nút Back to Top */}
+            {/* BackTop Button */}
             <FloatButton.BackTop 
                 type="primary" 
                 icon={<ArrowUpOutlined />} 

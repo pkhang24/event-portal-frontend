@@ -11,7 +11,7 @@ import {
 const { Option } = Select;
 
 const AdminUsersPage = () => {
-    const [view, setView] = useState('list'); // 'list' hoặc 'trash'
+    const [view, setView] = useState('list');
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     
@@ -19,27 +19,24 @@ const AdminUsersPage = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [form] = Form.useForm();
-    const [messageApi, contextHolder] = message.useMessage(); // Dùng hook message
+    const [messageApi, contextHolder] = message.useMessage();
 
     // State cho Modal Xem
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [viewingUser, setViewingUser] = useState(null);
 
-    // --- FETCH DATA ---
     const fetchData = async () => {
         setLoading(true);
         try {
             // Nếu view='list' lấy tất cả, nếu view='trash' lấy thùng rác
             const data = view === 'list' ? await getAllUsers() : await getDeletedUsers();
             console.log("Dữ liệu tải về:", data);
-            setUsers(data); // Service đã trả về data rồi, không cần .data
+            setUsers(data);
         } catch (err) { messageApi.error("Lỗi tải dữ liệu"); }
         finally { setLoading(false); }
     };
 
     useEffect(() => { fetchData(); }, [view]);
-
-    // --- HANDLERS (Xử lý hành động) ---
 
     const handleRoleChange = async (id, role) => {
         try { await updateUserRole(id, role); messageApi.success("Đổi quyền thành công!"); fetchData(); }
@@ -48,21 +45,17 @@ const AdminUsersPage = () => {
 
     const handleToggleLock = async (userId) => {
         try {
-            // Phải có 'await' ở đây để đợi Backend trả lời xong
             await toggleUserLock(userId);
-            
-            // Nếu dòng trên thành công (không lỗi), dòng này mới chạy
             messageApi.success("Đã thay đổi trạng thái khóa tài khoản!");
             
-            fetchData(); // Tải lại danh sách để cập nhật icon
+            fetchData();
         } catch (err) {
-            // Nếu dòng 'await' ở trên bị lỗi, nó nhảy thẳng xuống đây (bỏ qua message success)
             console.error("Lỗi khóa user:", err);
             messageApi.error("Thao tác thất bại.");
         }
     };
 
-    // Xử lý Xóa (Soft hoặc Hard tùy vào view)
+    // Xử lý Xóa (Soft Delete / Hard Delete)
     const handleDelete = async (id) => {
         try {
             if (view === 'list') {
@@ -121,32 +114,26 @@ const AdminUsersPage = () => {
                     </Radio.Group>
                 }
             >
-                {/* Chỉ hiện nút Thêm mới ở view List */}
                 {view === 'list' && (
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal(null)} style={{ marginBottom: 16 }}>
                         Thêm tài khoản mới
                     </Button>
                 )}
-
-                {/* Tái sử dụng UserManagementTab nhưng truyền props linh hoạt hơn */}
-                {/* Lưu ý: Bạn cần sửa UserManagementTab một chút để nó hỗ trợ hiển thị nút Restore/Delete vĩnh viễn khi ở chế độ trash */}
-                {/* Hoặc đơn giản là dùng lại code Table ở đây */}
                 
                 <UserManagementTab 
                     users={users} 
                     loading={loading}
-                    // Truyền view xuống để component con biết đang ở chế độ nào mà render nút bấm
                     viewMode={view} 
                     onRoleChange={handleRoleChange}
                     onLock={handleToggleLock}
                     onEdit={handleOpenModal}
-                    onDelete={handleDelete} // Hàm này tự lo liệu soft/hard delete
+                    onDelete={handleDelete}
                     onView={handleOpenView}
-                    onRestore={handleRestore} // Thêm hàm này
+                    onRestore={handleRestore}
                 />
             </Card>
 
-            {/* Modal Tạo/Sửa (Code form y hệt cũ) */}
+            {/* Modal Tạo/Sửa */}
             <Modal title={editingUser ? "Sửa User" : "Tạo User"} open={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null} destroyOnHidden>
                 <Form form={form} layout="vertical" onFinish={handleSave}>
                     <Form.Item name="hoTen" label="Họ tên" rules={[{ required: true }]}><Input /></Form.Item>
@@ -162,7 +149,7 @@ const AdminUsersPage = () => {
                 </Form>
             </Modal>
 
-            {/* Modal Xem (Code description y hệt cũ) */}
+            {/* Modal Xem */}
             <Modal title="Chi tiết" open={isViewModalVisible} onCancel={() => setIsViewModalVisible(false)} footer={null}>
                 {viewingUser && (
                     <Descriptions column={1} bordered>

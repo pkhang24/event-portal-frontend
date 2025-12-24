@@ -14,7 +14,7 @@ import MyNavbar from '../components/MyNavbar';
 // Đảm bảo import đủ các service
 import { 
     getMyEvents, softDeleteEvent, 
-    getMyDeletedEvents, restoreEvent, permanentDeleteEvent, // Import mới
+    getMyDeletedEvents, restoreEvent, permanentDeleteEvent,
     getParticipants 
 } from '../services/eventService';
 import dayjs from 'dayjs';
@@ -27,35 +27,26 @@ const PosterEventsPage = () => {
     const navigate = useNavigate();
     // const [modal, contextHolder] = Modal.useModal();
     
-    // 1. STATE QUẢN LÝ DỮ LIỆU
-    const [events, setEvents] = useState([]);      // Sự kiện active (chưa xóa)
-    const [trashEvents, setTrashEvents] = useState([]); // Sự kiện trong thùng rác
+    // STATE QUẢN LÝ DỮ LIỆU
+    const [events, setEvents] = useState([]);
+    const [trashEvents, setTrashEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // 2. STATE UI
+    // STATE UI
     const [activeTab, setActiveTab] = useState('ALL');
     const [searchText, setSearchText] = useState('');
 
-    // 3. STATE MODAL DANH SÁCH THAM GIA
+    // STATE MODAL DANH SÁCH THAM GIA
     const [isParticipantModalVisible, setIsParticipantModalVisible] = useState(false);
     const [participants, setParticipants] = useState([]);
     const [loadingParticipants, setLoadingParticipants] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState(null);
 
-    // --- LOAD DỮ LIỆU ---
     const fetchEvents = async () => {
         setLoading(true);
         try {
-            // 1. Luôn lấy danh sách ACTIVE (cho các tab All, Draft, Pending, Published)
-            // Vì Backend dùng @Where nên getMyEvents chỉ trả về cái chưa xóa -> OK
             const activeData = await getMyEvents();
-            
-            // 2. Luôn lấy danh sách TRASH (cho tab Thùng rác)
-            // Gọi API mới chuyên lấy rác
             const trashData = await getMyDeletedEvents();
-
-            // 3. Set State
-            // Sort theo ngày tạo mới nhất
             const sortFn = (a, b) => new Date(b.createdAt) - new Date(a.createdAt);
             
             setEvents(activeData.sort(sortFn));
@@ -71,36 +62,26 @@ const PosterEventsPage = () => {
 
     useEffect(() => {
         fetchEvents();
-    }, []); // Chỉ chạy 1 lần khi mount, sau này gọi lại khi thao tác xong
+    }, []);
 
-    // --- CÁC HÀNH ĐỘNG ---
-
-    // 1. Chuyển hướng sang trang Tạo Mới (Thay vì mở Modal popup cũ)
     const handleCreateNew = () => {
         navigate('/create-event');
     };
 
-    // 2. Chuyển hướng sang trang Sửa (Gửi kèm dữ liệu)
     const handleEdit = (record) => {
         navigate('/create-event', { state: { formData: record, isEdit: true } });
     };
 
-    // 3. Xem trước
     const handlePreview = (record) => {
     const previewData = {
         ...record,
-        // Backend trả về thẳng 'tenNguoiDang' và 'tenDanhMuc', không cần chọc sâu vào object
         tenNguoiDang: record.tenNguoiDang || record.nguoiDang?.hoTen || 'Bạn',
-        
-        // Ưu tiên lấy record.tenDanhMuc (từ API), nếu không có mới tìm trong object (dự phòng)
         tenDanhMuc: record.tenDanhMuc || record.category?.tenDanhMuc || 'Chưa phân loại',
-        
         isPreview: true 
     };
     navigate('/events/preview', { state: { previewData, source: 'list' } });
 };
 
-    // --- SỬA HÀM XÓA MỀM ---
     const handleDeleteEvent = async (id) => {
         try {
             await softDeleteEvent(id);
@@ -111,7 +92,6 @@ const PosterEventsPage = () => {
         }
     };
 
-    // --- SỬA HÀM KHÔI PHỤC ---
     const handleRestore = async (id) => {
         try {
             await restoreEvent(id);
@@ -122,7 +102,6 @@ const PosterEventsPage = () => {
         }
     };
 
-    // --- SỬA HÀM XÓA CỨNG ---
     const handlePermanentDelete = async (id) => {
         try {
             await permanentDeleteEvent(id);
@@ -133,7 +112,7 @@ const PosterEventsPage = () => {
         }
     };
 
-    // 6. Xem danh sách tham gia
+    // Xem danh sách tham gia
     const showParticipantModal = async (eventId) => {
         setSelectedEventId(eventId);
         setIsParticipantModalVisible(true);
@@ -148,7 +127,7 @@ const PosterEventsPage = () => {
         }
     };
 
-    // 7. Xuất Excel
+    // Xuất Excel
     const handleExportExcel = () => {
         if (!selectedEventId) return;
         const token = localStorage.getItem('token');
@@ -184,7 +163,6 @@ const PosterEventsPage = () => {
         { 
             title: 'Tên sự kiện', dataIndex: 'tieuDe', 
             render: (text) => <span style={{ fontWeight: 500 }}>{text}</span>,
-            // Filter tìm kiếm local
             onFilter: (value, record) => record.tieuDe.toLowerCase().includes(value.toLowerCase())
         },
         { 
@@ -210,7 +188,6 @@ const PosterEventsPage = () => {
                     onClick={() => showParticipantModal(record.id)}
                     disabled={activeTab === 'TRASH' || record.trangThai === 'DRAFT'}
                 >
-                    {/* Hiển thị số lượng nếu có, hoặc chỉ icon */}
                     Chi tiết
                 </Button>
             )
@@ -220,7 +197,6 @@ const PosterEventsPage = () => {
             render: (_, record) => (
                 <Space size="middle">
                     {activeTab === 'TRASH' ? (
-                        // ... (Phần nút bấm cho thùng rác giữ nguyên) ...
                         <>
                            <Tooltip title="Khôi phục">
                                 <Button type="primary" ghost size="medium" icon={<UndoOutlined />} onClick={() => handleRestore(record.id)} />
@@ -240,17 +216,14 @@ const PosterEventsPage = () => {
                         <>
                             <Tooltip title="Xem trước"><Button size="medium" icon={<EyeOutlined />} onClick={() => handlePreview(record)} /></Tooltip>
                             
-                            {/* Nút Sửa: Ẩn hoặc Disable nếu đã bị Hủy */}
                             <Tooltip title={record.trangThai === 'CANCELLED' ? "Sự kiện đã bị hủy (Không thể sửa)" : "Sửa"}>
                                 <Button 
                                     size="medium" icon={<EditOutlined />} 
                                     onClick={() => handleEdit(record)} 
-                                    // Disable nút sửa nếu đã bị Hủy
                                     disabled={record.trangThai === 'CANCELLED' || record.trangThai === 'PUBLISHED'} 
                                 />
                             </Tooltip>
                             
-                            {/* Nút Xóa Mềm: Luôn hiện để Poster có thể dọn dẹp vào thùng rác */}
                             <Tooltip title="Chuyển vào thùng rác">
                                 <Popconfirm
                                     title="Chuyển vào thùng rác?"
@@ -270,7 +243,6 @@ const PosterEventsPage = () => {
         },
     ];
 
-    // --- LỌC DỮ LIỆU ---
     const getDataSource = () => {
         if (activeTab === 'TRASH') return trashEvents;
         
@@ -285,7 +257,6 @@ const PosterEventsPage = () => {
         return filtered;
     };
 
-    // Hàm phụ trợ đếm số lượng
     const getCount = (status) => events.filter(e => e.trangThai === status).length;
 
     const tabItems = [

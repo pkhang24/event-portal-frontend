@@ -1,23 +1,22 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom'; // Dùng hook này để đọc URL
+import { useSearchParams } from 'react-router-dom';
 import { Layout, Typography, Row, Col, Spin, Alert } from 'antd';
 import { getPublicEvents } from '../services/eventService';
 import MyNavbar from '../components/MyNavbar';
-import { CardComponent } from './HomePage'; // Import component Card từ trang chủ
+import { CardComponent } from './HomePage';
 
 const { Content } = Layout;
 const { Title } = Typography;
 
 const SearchPage = () => {
     const [searchParams] = useSearchParams();
-    const query = searchParams.get('q'); // Lấy từ khóa 'q' từ URL
+    const query = searchParams.get('q');
     
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Hàm này sẽ chạy mỗi khi 'query' thay đổi
         if (!query) {
             setLoading(false);
             setEvents([]);
@@ -28,7 +27,6 @@ const SearchPage = () => {
             setLoading(true);
             setError(null);
             try {
-                // Gọi API với tham số 'search'
                 const data = await getPublicEvents(query, null);
                 setEvents(data);
             } catch (err) {
@@ -39,7 +37,7 @@ const SearchPage = () => {
         };
 
         fetchSearch();
-    }, [query]); // Phụ thuộc vào query
+    }, [query]);
 
     return (
         <Layout className="layout" style={{ minHeight: '100vh' }}>
@@ -60,7 +58,6 @@ const SearchPage = () => {
                     <Row gutter={[24, 24]} style={{ marginTop: 20 }}>
                         {events.map(event => (
                             <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
-                                {/* Tái sử dụng CardComponent từ HomePage */}
                                 <CardComponent event={event} isOngoing={false} />
                             </Col>
                         ))}

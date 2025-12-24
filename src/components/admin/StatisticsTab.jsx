@@ -4,7 +4,6 @@ import { DownloadOutlined, BarChartOutlined } from '@ant-design/icons';
 import { getTopEventStats, getMonthlyEventStats, getTopCategoryStats } from '../../services/adminService';
 import api from '../../services/api';
 
-// --- 1. IMPORT CHART.JS (Giống như file AdminDashboardPage) ---
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -17,7 +16,6 @@ import {
 } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 
-// Đăng ký các thành phần
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -35,24 +33,21 @@ const StatisticsTab = () => {
     const [year, setYear] = useState(new Date().getFullYear());
     const [month, setMonth] = useState(0); // 0 = Cả năm
     const [loading, setLoading] = useState(false);
-    // const [statsData, setStatsData] = useState(null); // State chứa dữ liệu thô (Object)
+    // const [statsData, setStatsData] = useState(null);
 
     const [eventData, setEventData] = useState(null);      // Top sự kiện
     const [monthlyData, setMonthlyData] = useState(null);  // Thống kê tháng
     const [categoryData, setCategoryData] = useState(null); // Thống kê danh mục
 
-    // Hàm tải báo cáo (Giữ nguyên)
+    // Hàm tải báo cáo
     const handleExport = async () => {
         try {
-            // Không cần lấy token thủ công, axios interceptor sẽ tự làm
-            
-            // 1. Dùng 'api' (axios) để gọi, KHÔNG DÙNG 'fetch'
             const response = await api.get('/admin/report/events-excel', {
-                responseType: 'blob', // 2. Báo cho axios biết đây là 1 file
+                responseType: 'blob'
             });
 
-            // 3. Xử lý file tải về (giống code cũ)
-            const blob = response.data; // Dữ liệu file nằm trong response.data
+            // Xử lý file tải về
+            const blob = response.data
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -60,28 +55,27 @@ const StatisticsTab = () => {
             document.body.appendChild(a);
             a.click();
             a.remove();
-            window.URL.revokeObjectURL(url); // Dọn dẹp
+            window.URL.revokeObjectURL(url);
             
             message.success("Xuất báo cáo thành công!");
 
         } catch (err) {
-            console.error("Lỗi khi xuất file:", err); // Thêm log này để dễ debug
+            console.error("Lỗi khi xuất file:", err);
             message.error("Xuất báo cáo thất bại.");
         }
     };
 
-    // Hàm xem thống kê (Giữ nguyên)
+    // Hàm xem thống kê
     const handleViewStats = async () => {
         setLoading(true);
         try {
-            // Gọi song song 3 API
             const [topEvents, monthlyEvents, topCats] = await Promise.all([
                 getTopEventStats(year, month),
                 getMonthlyEventStats(year),
                 getTopCategoryStats()
             ]);
 
-            // 1. Dữ liệu Top Sự kiện (Bar Chart)
+            // Dữ liệu Top Sự kiện
             if (topEvents && Object.keys(topEvents).length > 0) {
                 setEventData({
                     labels: Object.keys(topEvents),
@@ -95,21 +89,21 @@ const StatisticsTab = () => {
                 });
             } else setEventData(null);
 
-            // 2. Dữ liệu Sự kiện theo Tháng (Bar Chart)
+            // Dữ liệu Sự kiện theo Tháng
             if (monthlyEvents) {
                 setMonthlyData({
                     labels: Object.keys(monthlyEvents).map(m => `Tháng ${m}`),
                     datasets: [{
                         label: 'Số sự kiện',
                         data: Object.values(monthlyEvents),
-                        backgroundColor: 'rgba(255, 159, 64, 0.6)', // Màu cam
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
                         borderColor: 'rgba(255, 159, 64, 1)',
                         borderWidth: 1,
                     }],
                 });
             }
 
-            // 3. Dữ liệu Top Danh mục (Pie Chart)
+            // 3. Dữ liệu Top Danh mục
             if (topCats && Object.keys(topCats).length > 0) {
                 setCategoryData({
                     labels: Object.keys(topCats),
@@ -141,40 +135,9 @@ const StatisticsTab = () => {
         scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
     };
 
-    // --- 2. CHUẨN BỊ DỮ LIỆU VÀ CẤU HÌNH CHO BIỂU ĐỒ ---
-    // let chartJsData = null;
-    // if (statsData && Object.keys(statsData).length > 0) {
-    //     chartJsData = {
-    //         labels: Object.keys(statsData),
-    //         datasets: [{
-    //             label: 'Số lượt đăng ký',
-    //             data: Object.values(statsData),
-    //             backgroundColor: 'rgba(54, 162, 235, 0.6)',
-    //             borderColor: 'rgba(54, 162, 235, 1)',
-    //             borderWidth: 1,
-    //         }],
-    //     };
-    // }
-
-    // const chartOptions = {
-    //     responsive: true,
-    //     plugins: {
-    //         legend: { position: 'top' },
-    //         title: {
-    //             display: true,
-    //             text: `Top sự kiện ${month === 0 ? `năm ${year}` : `tháng ${month}/${year}`}`,
-    //             font: { size: 18 }
-    //         },
-    //     },
-    //     scales: {
-    //         y: { beginAtZero: true, ticks: { stepSize: 1 } }
-    //     }
-    // };
-    // ----------------------------------------------------
-
     return (
         <div style={{ paddingBottom: 20 }}>
-            {/* Bộ lọc (Giữ nguyên) */}
+            {/* Bộ lọc */}
             <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
                 <Col span={24}>
                     <Card title="Tùy chọn Báo cáo & Thống kê">
@@ -198,7 +161,7 @@ const StatisticsTab = () => {
                 </Col>
             </Row>
 
-            {/* Hàng 1: Biểu đồ Top Sự Kiện (To) */}
+            {/* Biểu đồ Top Sự Kiện */}
             <Row gutter={[16, 16]}>
                 <Col span={24}>
                     <Card title={`Top Sự kiện ${month === 0 ? `năm ${year}` : `tháng ${month}/${year}`}`}>
@@ -207,7 +170,7 @@ const StatisticsTab = () => {
                 </Col>
             </Row>
 
-            {/* Hàng 2: Hai biểu đồ nhỏ nằm ngang nhau */}
+            {/* Hai biểu đồ nhỏ nằm ngang nhau */}
             <Row gutter={[16, 16]} style={{ marginTop: 20 }}>
                 {/* Biểu đồ Tháng */}
                 <Col xs={24} md={16}>
